@@ -1,0 +1,29 @@
+# Secrets et configuration locale (ne jamais publier)
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dépendances et builds
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Fichiers téléversés et données locales
+uploads/
+data/
+backups/
+
+# Outils locaux
+.vercel/
+.claude/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*

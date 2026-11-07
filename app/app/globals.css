@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fbfcff;
+  --foreground: #0e1647;
+  --ink: #0e1647;
+  --brand: #2740d6;
+  --accent: #ffc233;
+  --mint: #19c9a0;
+  --coral: #ff6b5b;
+  --sky: #e8edff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-brand: var(--brand);
+  --color-accent: var(--accent);
+  --color-mint: var(--mint);
+  --color-coral: var(--coral);
+  --color-sky: var(--sky);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fond pointillé façon "carte électronique" */
+.bg-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1.5px, transparent 1.5px);
+  background-size: 26px 26px;
+}
+.bg-dots-dark {
+  background-image: radial-gradient(rgba(39, 64, 214, 0.13) 1.5px, transparent 1.5px);
+  background-size: 26px 26px;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+.float { animation: float 5s ease-in-out infinite; }
+.drift { animation: drift 6s ease-in-out infinite; }
+.drift-2 { animation: drift 7.5s ease-in-out infinite reverse; }
+.blink { transform-box: fill-box; transform-origin: center; animation: blink 5s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .float, .drift, .drift-2, .blink { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details[open] .chev { transform: rotate(180deg); }

@@ -1,0 +1,6 @@
+# Mode local : expose l'app en HTTP simple sur http://localhost:3200 (sans HTTPS, pour tester).
+# Lancer : docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+services:
+  web:
+    ports:
+      - "127.0.0.1:3200:3000"
