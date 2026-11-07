@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { LINE_SLOTS } from "@/lib/business";
+import { MAX_BLOCKS, parseSlots } from "@/lib/schedule";
+import { normalizeUsername } from "@/lib/passwords";
+import { verifyPassword } from "@/lib/passwords";
+import { getTeamUserByUsername } from "@/lib/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -53,15 +57,28 @@ export async function login(f: FormData) {
   const wait = await loginLockMinutes(ip);
   if (wait > 0) redirect(`/admin?error=locked&wait=${wait}`);
 
-  const ok = checkPassword(String(f.get("password") ?? ""));
-  if (!ok) {
+  const username = normalizeUsername(String(f.get("username") ?? ""));
+  const password = String(f.get("password") ?? "");
+
+  // Sans identifiant (ou « super ») : responsable. Sinon : membre de l'équipe.
+  let who: { kind: "super" } | { kind: "user"; id: string } | null = null;
+  if (!username || username === "super") {
+    if (checkPassword(password)) who = { kind: "super" };
+  } else {
+    const user = await getTeamUserByUsername(username);
+    if (user && user.active && (await verifyPassword(password, user.passwordHash))) {
+      who = { kind: "user", id: user.id };
+    }
+  }
+
+  if (!who) {
     await recordLoginFailure(ip);
     const after = await loginLockMinutes(ip);
     redirect(after > 0 ? `/admin?error=locked&wait=${after}` : "/admin?error=1");
   }
   await clearLoginFailures(ip);
-  await setAdminCookie();
-  redirect("/admin");
+  await setAdminCookie(who);
+  redirect(who.kind === "user" ? "/admin/taches" : "/admin");
 }
 
 export async function logout() {
@@ -125,6 +142,29 @@ export async function saveAttendanceAction(f: FormData) {
 }
 
 const LEVEL_NAMES: Level[] = ["Éveil", "Explorateur", "Créateur"];
+
+/** Enregistre les horaires de la séance : heure de début, blocs et créneaux proposés. */
+export async function saveScheduleAction(f: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const blocks = Array.from({ length: MAX_BLOCKS }, (_, i) => ({
+    label: text(f, `blockLabel${i}`, 80),
+    minutes: Math.round(Number(f.get(`blockMin${i}`))),
+  })).filter((b) => b.label && Number.isFinite(b.minutes) && b.minutes >= 1 && b.minutes <= 240);
+  const start = String(f.get("start") ?? "").trim();
+  await setSetting(
+    "session_schedule",
+    JSON.stringify({
+      start: /^([01]\d|2[0-3]):[0-5]\d$/.test(start) ? start : null,
+      blocks,
+      slots: parseSlots(String(f.get("slots") ?? "")),
+    }),
+  );
+  revalidatePath("/");
+  revalidatePath("/programme");
+  revalidatePath("/sondage");
+  revalidatePath("/admin/reglages");
+  redirect("/admin/reglages?schedule=1");
+}
 
 export async function saveCapacitiesAction(f: FormData) {
   if (!(await isAdmin())) redirect("/admin");
@@ -244,7 +284,7 @@ export async function updateChildFlagsAction(f: FormData) {
 }
 
 const MODEL_FIELDS = [
-  "fee", "reductionPct", "samedisParMois", "heuresSeance", "tauxAnimateur", "salleMois",
+  "fee", "reductionPct", "samedisParMois", "tauxAnimateur", "salleMois",
   "assuranceMois", "adminMois", "sponsorsMois", "amortissementMois", "enfantsParAnimateur",
 ] as const;
 

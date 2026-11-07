@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import { submitTeacherRequest } from "./actions";
 
 export const metadata = { title: "Enseignants · Kids Tech-nuru Lab" };
@@ -36,12 +37,10 @@ export default async function EnseignantsPage({
   return (
     <div className="bg-dots-dark bg-sky/50">
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <p className="text-sm font-bold uppercase tracking-widest text-brand">Pour les écoles et les enseignants</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Faites venir l&apos;atelier chez vous</h1>
-        <p className="mt-3 text-ink/70">
+        <PageIntro eyebrow="Pour les écoles et les enseignants" title="Faites venir l&apos;atelier chez vous">
           Vous êtes enseignant ou responsable d&apos;école ? Demandez une intervention, un cycle pour vos élèves ou une
           formation pour vos équipes en informatique et en robotique. Les champs marqués d&apos;un astérisque sont obligatoires.
-        </p>
+        </PageIntro>
 
         <form action={submitTeacherRequest} encType="multipart/form-data" className="mt-8 space-y-6">
           <section className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink/10">

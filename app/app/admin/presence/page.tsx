@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
@@ -54,11 +55,12 @@ export default async function PresencePage({
         </Link>
         <AdminNav current="/admin/presence" />
 
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Registre de présence</h1>
-            <p className="text-sm capitalize text-ink/60">{formatDate(date)}</p>
-          </div>
+        <div className="mt-5">
+          <PageIntro eyebrow="Espace équipe" title="Registre de présence">
+            <span className="capitalize">{formatDate(date)}</span>
+          </PageIntro>
+        </div>
+        <div className="-mt-4 mb-6 flex flex-wrap items-center justify-end gap-3">
           <p className="rounded-full bg-white px-4 py-2 text-sm font-bold shadow-sm ring-1 ring-ink/10">
             {presentCount} / {registrations.length} présents
           </p>

@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
@@ -24,8 +25,10 @@ export default async function DossiersPage({ searchParams }: { searchParams: Pro
           ← Espace équipe
         </Link>
         <AdminNav current="/admin/dossiers" />
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-3xl font-extrabold tracking-tight">Dossiers déposés</h1>
+        <div className="mt-5">
+          <PageIntro eyebrow="Espace équipe" title="Dossiers déposés" />
+        </div>
+        <div className="-mt-4 mb-6 flex flex-wrap items-center justify-end gap-3">
           <p className="rounded-full bg-white px-4 py-2 text-sm font-bold shadow-sm ring-1 ring-ink/10">{todo} à traiter</p>
         </div>
         <p className="mt-2 text-sm text-ink/65">

@@ -43,6 +43,14 @@ body {
   background-size: 26px 26px;
 }
 
+/* Halo lumineux décoratif (flou doux, sans effet sur la lecture) */
+.glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }

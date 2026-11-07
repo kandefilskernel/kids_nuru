@@ -1,5 +1,6 @@
 import { breakEven, monthly, parseModel, type ModelData } from "@/lib/business";
 import { countByLevel, getChildCounts, getMaterielTotal, getSetting } from "@/lib/db";
+import { parseSchedule, totalMinutes } from "@/lib/schedule";
 
 /**
  * Charge le modèle, les effectifs et le matériel, puis calcule les résultats.
@@ -8,12 +9,18 @@ import { countByLevel, getChildCounts, getMaterielTotal, getSetting } from "@/li
  * le calcul part des inscriptions réelles.
  */
 export async function loadModel() {
-  const [model, actual, byLevel, materiel] = await Promise.all([
+  const [rawModel, actual, byLevel, materiel, schedule] = await Promise.all([
     getSetting("business_model").then((raw) => parseModel(raw)),
     getChildCounts(),
     countByLevel(),
     getMaterielTotal(),
+    getSetting("session_schedule").then((raw) => parseSchedule(raw)),
   ]);
+  // La durée d'une séance vient des horaires définis dans Réglages (somme des blocs).
+  const model = {
+    ...rawModel,
+    assumptions: { ...rawModel.assumptions, heuresSeance: totalMinutes(schedule) / 60 },
+  };
 
   const a = model.assumptions;
   const p = a.prevusParNiveau;

@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
@@ -38,8 +39,10 @@ export default async function SondageAdminPage() {
           ← Espace équipe
         </Link>
         <AdminNav current="/admin/sondage" />
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-3xl font-extrabold tracking-tight">Sondage des parents</h1>
+        <div className="mt-5">
+          <PageIntro eyebrow="Espace équipe" title="Sondage des parents" />
+        </div>
+        <div className="-mt-4 mb-6 flex flex-wrap items-center justify-end gap-3">
           <Link href="/sondage" className="rounded-full bg-white px-4 py-2 text-sm font-semibold ring-1 ring-ink/15 hover:bg-sky">
             Voir le formulaire
           </Link>

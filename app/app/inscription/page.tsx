@@ -1,4 +1,4 @@
-import { Icon, HeroArt } from "@/components/art";
+import { Icon } from "@/components/art";
 import RegisterForm from "./RegisterForm";
 
 export const metadata = { title: "Inscription · Kids Tech-nuru Lab" };
@@ -29,9 +29,20 @@ export default function Page() {
               </li>
             ))}
           </ul>
-          <div className="mt-8 opacity-95">
-            <HeroArt />
-          </div>
+          <figure className="mt-8 overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/25">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/photos/teens-laptop.jpg"
+              alt="Des adolescents qui travaillent ensemble sur un ordinateur pour un projet"
+              className="aspect-[16/10] w-full object-cover"
+            />
+            <figcaption className="bg-white px-4 py-3 text-sm text-ink/75">
+              Des projets réalisés en équipe, présentés aux familles.
+            </figcaption>
+          </figure>
+          <p className="mt-5 text-sm text-white/80">
+            Déjà une question ? Écrivez-nous sur WhatsApp avant de vous inscrire.
+          </p>
         </div>
       </aside>
 

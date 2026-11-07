@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { submitDossier } from "./actions";
 
@@ -44,12 +45,10 @@ export default async function DepotPage({ searchParams }: { searchParams: Promis
   return (
     <div className="bg-dots-dark bg-sky/50">
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <p className="text-sm font-bold uppercase tracking-widest text-brand">Dépôt de dossiers</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Envoyez votre dossier</h1>
-        <p className="mt-3 text-ink/70">
+        <PageIntro eyebrow="Dépôt de dossiers" title="Envoyez votre dossier">
           Autorisation parentale signée, certificat, dossier d&apos;école ou projet réalisé : déposez le fichier ici.
           Formats acceptés : PDF, JPEG, PNG (5 Mo maximum). Après l&apos;envoi, vous recevez un numéro de dossier pour le suivre.
-        </p>
+        </PageIntro>
         <p className="mt-2 text-sm">
           Vous avez déjà déposé un dossier ?{" "}
           <Link href="/depot/suivi" className="font-bold text-brand hover:underline">

@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
@@ -38,7 +39,9 @@ export default async function BudgetPage({
           ← Espace équipe
         </Link>
         <AdminNav current="/admin/budget" />
-        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Budget du pilote</h1>
+        <div className="mt-5">
+          <PageIntro eyebrow="Espace équipe" title="Budget du pilote" />
+        </div>
 
         {imp === "ok" && (
           <p className="mt-4 rounded-xl bg-mint/15 p-3 text-sm font-semibold text-[#0b7a63] ring-1 ring-mint/40">

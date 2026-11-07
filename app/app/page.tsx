@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { CreateurArt, EveilArt, ExplorateurArt, HeroArt, Icon } from "@/components/art";
+import { getSetting } from "@/lib/db";
+import { parseSchedule, timetable, totalMinutes } from "@/lib/schedule";
+
+export const dynamic = "force-dynamic";
 
 const facts = [
   { big: "5-12", small: "ans, trois niveaux" },
@@ -13,6 +17,7 @@ const levels = [
     name: "Éveil",
     age: "5-7 ans",
     tag: "bg-mint/20 text-[#0b7a63]",
+    bar: "bg-mint",
     art: <EveilArt />,
     content: "Logique par le jeu, programmation sans écran, découverte des capteurs, des lumières et des sons.",
     tools: ["Cartes de codage", "Robots au sol"],
@@ -22,6 +27,7 @@ const levels = [
     name: "Explorateur",
     age: "8-10 ans",
     tag: "bg-brand/10 text-brand",
+    bar: "bg-brand",
     art: <ExplorateurArt />,
     content: "Programmation par blocs, boucles, conditions et variables, circuits simples et premiers capteurs.",
     tools: ["Scratch", "mBlock", "micro:bit"],
@@ -31,6 +37,7 @@ const levels = [
     name: "Créateur",
     age: "11-12 ans",
     tag: "bg-accent/30 text-[#8a5a00]",
+    bar: "bg-accent",
     art: <CreateurArt />,
     content: "Python, capteurs et moteurs avec Arduino, premiers projets d'IA, initiation au web et aux applications mobiles.",
     tools: ["Python", "Arduino", "Teachable Machine", "App Inventor"],
@@ -38,14 +45,9 @@ const levels = [
   },
 ];
 
-const saturday = [
-  { min: 10, label: "Accueil", color: "bg-brand" },
-  { min: 20, label: "Découverte", color: "bg-mint" },
-  { min: 60, label: "Pratique en équipe", color: "bg-accent" },
-  { min: 10, label: "Pause", color: "bg-coral" },
-  { min: 15, label: "Défi et partage", color: "bg-brand" },
-  { min: 5, label: "Rangement", color: "bg-mint" },
-];
+const SAT_COLORS = ["bg-brand", "bg-mint", "bg-accent", "bg-coral", "bg-brand", "bg-mint", "bg-ink", "bg-brand"];
+
+const fmtDuration = (min: number) => (min % 60 === 0 ? `${min / 60} heure${min >= 120 ? "s" : ""}` : `${min} minutes`);
 
 const steps = [
   { n: "1", title: "Vous vous inscrivez", text: "Un formulaire de 2 minutes. Le niveau est choisi selon l'âge de l'enfant." },
@@ -70,13 +72,20 @@ const faqs = [
   { q: "Est-ce une université ?", a: "Non. Kids Tech-nuru Lab est un centre de formation extrascolaire pour enfants." },
 ];
 
-export default function Home() {
+export default async function Home() {
+  // Horaires définis par l'équipe dans l'espace admin (Réglages).
+  const schedule = parseSchedule(await getSetting("session_schedule"));
+  const saturday = timetable(schedule).map((b, i) => ({ min: b.minutes, label: b.label, color: SAT_COLORS[i % SAT_COLORS.length] }));
+  const total = totalMinutes(schedule);
+  const pratique = saturday.find((b) => /pratique/i.test(b.label))?.min ?? 0;
   return (
     <>
       {/* HERO */}
       <section className="relative overflow-hidden bg-gradient-to-br from-ink via-[#1a2a96] to-brand text-white">
         <div className="bg-dots absolute inset-0" aria-hidden="true" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 py-14 md:grid-cols-2 md:py-20">
+        <div className="glow -left-24 -top-24 h-80 w-80 bg-mint/50" aria-hidden="true" />
+        <div className="glow -bottom-32 right-0 h-96 w-96 bg-accent/40" aria-hidden="true" />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 py-14 md:grid-cols-2 md:py-24">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold ring-1 ring-white/20">
               <span className="h-2 w-2 rounded-full bg-mint" /> Atelier pilote à Lubumbashi
@@ -89,10 +98,20 @@ export default function Home() {
               Programmation, robots et intelligence artificielle pour les enfants de 5 à 12 ans :
               des projets concrets, en petits groupes, présentés fièrement aux parents.
             </p>
+            <ul className="mt-7 flex flex-wrap gap-2 text-sm font-semibold text-white/90">
+              {["Petits groupes de 8 max", "Projet présenté aux parents", "Paiement par mobile money"].map((t) => (
+                <li key={t} className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/20">
+                  <svg className="h-4 w-4 text-mint" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12l5 5L20 7" />
+                  </svg>
+                  {t}
+                </li>
+              ))}
+            </ul>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/inscription"
-                className="rounded-full bg-accent px-6 py-3.5 text-base font-bold text-ink shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                className="rounded-full bg-accent px-7 py-4 text-base font-bold text-ink shadow-xl ring-4 ring-accent/25 transition hover:-translate-y-0.5 hover:shadow-2xl"
               >
                 Inscrire mon enfant au pilote
               </Link>
@@ -104,8 +123,28 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="mx-auto w-full max-w-md md:max-w-none">
-            <HeroArt />
+          <div className="relative mx-auto w-full max-w-md md:max-w-none">
+            {/* Preuve réelle en premier plan : des enfants en train de fabriquer, pas une illustration */}
+            <figure className="relative overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-white/25">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/photos/child-tablet.jpg"
+                alt="Un enfant qui apprend le code sur une tablette, à côté de blocs colorés"
+                className="aspect-[4/5] w-full object-cover md:aspect-[5/4]"
+              />
+              <figcaption className="absolute bottom-4 left-4 right-4 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-ink shadow-xl">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-ink">
+                  <Icon name="trophy" />
+                </span>
+                <span className="text-sm">
+                  <b className="block font-extrabold">Chaque enfant repart avec un projet réel</b>
+                  <span className="text-ink/65">Fabriqué pendant la session, présenté à sa famille.</span>
+                </span>
+              </figcaption>
+            </figure>
+            <div className="float absolute -right-3 -top-5 hidden w-28 sm:block md:-right-6" aria-hidden="true">
+              <HeroArt />
+            </div>
           </div>
         </div>
       </section>
@@ -114,8 +153,8 @@ export default function Home() {
       <section className="relative z-10 mx-auto -mt-8 max-w-5xl px-4">
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-ink/10 shadow-xl ring-1 ring-ink/10 md:grid-cols-4">
           {facts.map((f) => (
-            <div key={f.small} className="bg-white px-4 py-5 text-center">
-              <dt className="text-3xl font-extrabold text-brand">{f.big}</dt>
+            <div key={f.small} className="bg-white px-4 py-6 text-center transition hover:bg-sky/60">
+              <dt className="bg-gradient-to-r from-brand to-[#5a2be2] bg-clip-text text-4xl font-extrabold text-transparent">{f.big}</dt>
               <dd className="mt-1 text-sm text-ink/70">{f.small}</dd>
             </div>
           ))}
@@ -138,6 +177,7 @@ export default function Home() {
               key={l.name}
               className="group flex flex-col overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-ink/10 transition hover:-translate-y-1 hover:shadow-xl"
             >
+              <div className={`h-1.5 w-full ${l.bar}`} aria-hidden="true" />
               <div className="aspect-[200/130] w-full p-3 pb-0">{l.art}</div>
               <div className="flex flex-1 flex-col p-6">
                 <div className="flex items-center justify-between">
@@ -165,7 +205,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 py-20">
           <p className="text-sm font-bold uppercase tracking-widest text-brand">Un samedi type</p>
           <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            2 heures, dont 1 heure à fabriquer
+            {fmtDuration(total)}, dont {pratique} minutes à fabriquer
           </h2>
           <p className="mt-4 max-w-2xl text-ink/75">
             Chaque séance suit le même rythme : de quoi comprendre, essayer, se tromper, recommencer
@@ -243,15 +283,16 @@ export default function Home() {
       </section>
 
       {/* PARENTS */}
-      <section id="parents" className="scroll-mt-20 bg-ink text-white">
-        <div className="mx-auto max-w-6xl px-4 py-20">
+      <section id="parents" className="relative scroll-mt-20 overflow-hidden bg-ink text-white">
+        <div className="glow -right-20 top-0 h-80 w-80 bg-brand/50" aria-hidden="true" />
+        <div className="relative mx-auto max-w-6xl px-4 py-20">
           <p className="text-sm font-bold uppercase tracking-widest text-accent">Pour les parents</p>
           <h2 className="mt-2 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
             Confier son enfant en toute confiance
           </h2>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {parents.map((p) => (
-              <div key={p.title} className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10">
+              <div key={p.title} className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:-translate-y-1 hover:bg-white/10">
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-ink">
                   <Icon name={p.icon} />
                 </span>
@@ -282,9 +323,19 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Barre d'action fixe sur mobile : l'inscription reste à portée de pouce */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/10 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(14,22,71,0.08)] backdrop-blur md:hidden print:hidden">
+        <Link
+          href="/inscription"
+          className="flex w-full items-center justify-center rounded-full bg-accent px-6 py-3.5 text-base font-extrabold text-ink shadow-md"
+        >
+          Inscrire mon enfant
+        </Link>
+      </div>
+
       {/* CTA FINAL */}
       <section className="px-4 pb-20">
-        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-r from-brand to-[#5a2be2] px-6 py-14 text-center text-white shadow-xl">
+        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-r from-brand via-[#3b3fd8] to-[#5a2be2] px-6 py-16 text-center text-white shadow-2xl">
           <div className="bg-dots absolute inset-0" aria-hidden="true" />
           <div className="relative">
             <h2 className="text-3xl font-extrabold sm:text-4xl">Les places du pilote sont limitées</h2>

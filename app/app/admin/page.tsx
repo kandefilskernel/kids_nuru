@@ -1,6 +1,8 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { Logo } from "@/components/art";
-import { adminConfigured, isAdmin } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { adminConfigured, currentMember, isAdmin } from "@/lib/auth";
 import {
   getCollectedTotals,
   getDashboardStats,
@@ -47,6 +49,9 @@ export default async function AdminPage({
     );
   }
 
+  // Un membre de l'équipe n'a accès qu'à ses tâches.
+  if (await currentMember()) redirect("/admin/taches");
+
   if (!(await isAdmin())) {
     return (
       <Shell>
@@ -57,6 +62,15 @@ export default async function AdminPage({
             <p className="mt-1 text-sm text-ink/60">Réservé à l&apos;équipe Kids Tech-nuru Lab</p>
           </div>
           <form action={login} className="mt-6 space-y-4">
+            <label className="block text-sm">
+              <span className="font-semibold">Identifiant</span>
+              <input
+                name="username"
+                autoComplete="username"
+                placeholder="Membre de l'équipe (vide pour le responsable)"
+                className="mt-1.5 w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-base shadow-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/15"
+              />
+            </label>
             <label className="block text-sm">
               <span className="font-semibold">Mot de passe</span>
               <input
@@ -121,10 +135,11 @@ export default async function AdminPage({
 
   return (
     <Shell wide>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Espace équipe</h1>
-          <p className="text-sm text-ink/60">Suivi de {monthLabel(month)}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <PageIntro eyebrow="Espace équipe" title="Tableau de bord">
+            Suivi de {monthLabel(month)}
+          </PageIntro>
         </div>
         <form action={logout}>
           <button className="rounded-full bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-ink/15 transition hover:bg-sky">

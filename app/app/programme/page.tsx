@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { CreateurArt, EveilArt, ExplorateurArt, HeroArt } from "@/components/art";
-import { EVALUATION, PLAN_B, SESSION_STRUCTURE, TRACKS, type Track } from "@/lib/programme";
+import { CreateurArt, EveilArt, ExplorateurArt } from "@/components/art";
+import { EVALUATION, PLAN_B, TRACKS, type Track } from "@/lib/programme";
+import { parseSchedule, timetable, totalMinutes } from "@/lib/schedule";
+import { getSetting } from "@/lib/db";
 
 export const metadata = { title: "Programme détaillé · Kids Tech-nuru Lab" };
 
@@ -43,9 +45,15 @@ const OFFLINE = {
   partiel: { label: "Partiellement", cls: "bg-accent/30 text-[#8a5a00]" },
 } as const;
 
-const TOTAL_MIN = SESSION_STRUCTURE.reduce((s, x) => s + x.minutes, 0);
+export const dynamic = "force-dynamic";
 
-export default function ProgrammePage() {
+const fmtDuration = (min: number) => (min % 60 === 0 ? `${min / 60} heure${min >= 120 ? "s" : ""}` : `${min} minutes`);
+
+export default async function ProgrammePage() {
+  // Horaires définis par l'équipe dans l'espace admin (Réglages).
+  const schedule = parseSchedule(await getSetting("session_schedule"));
+  const rows = timetable(schedule);
+  const TOTAL_MIN = totalMinutes(schedule);
   return (
     <div className="bg-sky/40">
       {/* Bandeau d'accueil */}
@@ -60,7 +68,7 @@ export default function ProgrammePage() {
               Un parcours pour <span className="text-accent">chaque âge</span>, un projet à présenter.
             </h1>
             <p className="mt-4 max-w-lg text-white/80">
-              Séances de 2 heures, groupes par tranche d&apos;âge, un assistant pour 8 enfants au plus. À la fin, votre
+              Séances de {fmtDuration(TOTAL_MIN)}, groupes par tranche d&apos;âge, un assistant pour 8 enfants au plus. À la fin, votre
               enfant présente son projet aux parents.
             </p>
             <nav className="mt-7 flex flex-wrap gap-2" aria-label="Niveaux">
@@ -75,9 +83,14 @@ export default function ProgrammePage() {
               ))}
             </nav>
           </div>
-          <div className="hidden md:block">
-            <HeroArt />
-          </div>
+          <figure className="hidden overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-white/25 md:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/photos/teens-laptop.jpg"
+              alt="Des adolescents qui travaillent ensemble sur un ordinateur pour un projet"
+              className="aspect-[5/4] w-full object-cover"
+            />
+          </figure>
         </div>
       </section>
 
@@ -87,12 +100,14 @@ export default function ProgrammePage() {
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-brand">Une séance type</p>
-              <h2 className="mt-1 text-2xl font-extrabold">Deux heures, six temps</h2>
+              <h2 className="mt-1 text-2xl font-extrabold">
+                {fmtDuration(TOTAL_MIN)}, {rows.length} temps
+              </h2>
             </div>
             <p className="text-sm font-semibold text-ink/60">{TOTAL_MIN} minutes</p>
           </div>
-          <div className="mt-6 flex h-12 overflow-hidden rounded-2xl shadow-inner ring-1 ring-ink/10" role="img" aria-label="Répartition d'une séance de 2 heures">
-            {SESSION_STRUCTURE.map((s, i) => (
+          <div className="mt-6 flex h-12 overflow-hidden rounded-2xl shadow-inner ring-1 ring-ink/10" role="img" aria-label="Répartition d'une séance">
+            {rows.map((s, i) => (
               <div
                 key={s.label}
                 style={{ flexGrow: s.minutes }}
@@ -105,14 +120,14 @@ export default function ProgrammePage() {
             ))}
           </div>
           <ol className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {SESSION_STRUCTURE.map((s, i) => (
+            {rows.map((s, i) => (
               <li key={s.label} className="flex items-center gap-3 rounded-2xl bg-sky/60 p-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink text-sm font-extrabold text-white">
                   {i + 1}
                 </span>
                 <span className="flex-1 text-sm font-semibold">{s.label}</span>
                 <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-ink/70 ring-1 ring-ink/10">
-                  {s.minutes} min
+                  {s.from && s.to ? `${s.from} – ${s.to}` : `${s.minutes} min`}
                 </span>
               </li>
             ))}
@@ -139,6 +154,20 @@ export default function ProgrammePage() {
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* Électronique du niveau */}
+              <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-ink/10 sm:p-7">
+                <p className="text-xs font-bold uppercase tracking-widest text-brand">Électronique</p>
+                <h3 className="mt-1 text-xl font-extrabold">{t.electronique.titre}</h3>
+                <ul className="mt-4 grid gap-3 md:grid-cols-3">
+                  {t.electronique.points.map((p) => (
+                    <li key={p} className="flex gap-3 rounded-2xl bg-sky/60 p-4 text-sm text-ink/80">
+                      <span className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${th.dot}`} aria-hidden="true" />
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               {/* Frise : une carte par samedi */}

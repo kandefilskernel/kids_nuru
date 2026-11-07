@@ -21,7 +21,11 @@ const CSS = `
   .doc p { margin: 0; }
   .doc section { margin-top: 18pt; break-inside: avoid; }
   .doc .sec-title { display: flex; gap: 8pt; align-items: baseline; border-bottom: 0.5pt solid #bbb; padding-bottom: 4pt; margin-bottom: 8pt; break-after: avoid; }
-  .doc .sec-title span.n { font-weight: 700; color: #666; min-width: 12pt; font-size: 9pt; }
+  .doc .sec-title span.n { display: inline-flex; align-items: center; justify-content: center; width: 17pt; height: 17pt; border-radius: 50%; background: #2740d6; color: #fff; font-weight: 700; font-size: 8.5pt; flex-shrink: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .doc .band { background: linear-gradient(120deg, #0e1647 0%, #1a2a96 100%); color: #fff; border-radius: 10pt; padding: 14pt 18pt; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .doc .band .kicker { font-size: 7.5pt; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #ffc233; }
+  .doc .kpis > div .kpi-value { color: #2740d6; }
+  .doc tr.total td { background: #e8edff; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .doc table { width: 100%; border-collapse: collapse; font-size: 9pt; }
   .doc thead { display: table-header-group; }
   .doc th { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; text-align: left; padding: 0 4pt 5pt; border-bottom: 0.5pt solid #bbb; }
@@ -94,25 +98,28 @@ export default async function ImprimerPage() {
         </div>
 
         {/* En-tête */}
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, paddingBottom: 12, borderBottom: "0.5pt solid #111" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Logo size={44} />
+        <header className="band" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ background: "#fff", borderRadius: 10, padding: 4, display: "flex" }}>
+              <Logo size={40} />
+            </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>Kids Tech-nuru Lab</div>
-              <div style={{ fontSize: 8.5, color: "#444" }}>Centre de formation extrascolaire · Lubumbashi, RD Congo</div>
+              <div style={{ fontSize: 13, fontWeight: 800 }}>Kids Tech-nuru Lab</div>
+              <div style={{ fontSize: 8.5, opacity: 0.85 }}>Centre de formation extrascolaire · Lubumbashi, RD Congo</div>
             </div>
           </div>
-          <div style={{ textAlign: "right", fontSize: 8.5, color: "#444", lineHeight: 1.5 }}>
-            <div style={{ fontWeight: 700, color: "#111", fontSize: 9 }}>Fiche partenaires</div>
+          <div style={{ textAlign: "right", fontSize: 8.5, lineHeight: 1.5, opacity: 0.95 }}>
+            <div className="kicker">Fiche partenaires</div>
             <div>Édité le {dateFr(now)}</div>
             <div>Réf. MOD-{now.toISOString().slice(0, 7).replace("-", "")}</div>
           </div>
         </header>
 
         {/* Titre */}
-        <div style={{ marginTop: 14 }}>
-          <h1>Modèle économique du pilote</h1>
-          <p style={{ marginTop: 3, fontSize: 9.5, color: "#333" }}>
+        <div style={{ marginTop: 18 }}>
+          <div className="kicker" style={{ color: "#2740d6" }}>Modèle économique</div>
+          <h1 style={{ marginTop: 3 }}>Le pilote, en chiffres</h1>
+          <p style={{ marginTop: 4, fontSize: 9.5, color: "#333" }}>
             Montants indicatifs en dollars américains (USD) par mois, sauf mention contraire.
           </p>
         </div>

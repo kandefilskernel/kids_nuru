@@ -55,8 +55,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/inscription" className="hover:text-white">Inscription</Link>
               <Link href="/programme" className="hover:text-white">Programme</Link>
               <Link href="/tech-nuru" className="hover:text-white">Tech nuru</Link>
-              <Link href="/enseignants" className="hover:text-white">Enseignants</Link>              <Link href="/sondage" className="hover:text-white">Questionnaire</Link>
+              <Link href="/enseignants" className="hover:text-white">Enseignants</Link>
+              <Link href="/sondage" className="hover:text-white">Questionnaire</Link>
               <Link href="/galerie" className="hover:text-white">Galerie</Link>
+              <Link href="/parent" className="hover:text-white">Suivi de mon enfant</Link>
               <Link href="/#faq" className="hover:text-white">FAQ</Link>
               <Link href="/admin" className="hover:text-white">Espace équipe</Link>
             </div>

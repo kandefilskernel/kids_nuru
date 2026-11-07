@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
@@ -27,11 +28,12 @@ export default async function ModelePage({ searchParams }: { searchParams: Promi
         </Link>
         <AdminNav current="/admin/modele" />
 
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Modèle économique</h1>
-            <p className="text-sm text-ink/60">Montants en USD par mois. Les résultats se recalculent à l&apos;enregistrement.</p>
-          </div>
+        <div className="mt-5">
+          <PageIntro eyebrow="Espace équipe" title="Modèle économique">
+            Montants en USD par mois. Les résultats se recalculent à l&apos;enregistrement.
+          </PageIntro>
+        </div>
+        <div className="-mt-4 mb-6 flex flex-wrap items-center justify-end gap-3">
           <Link
             href="/admin/modele/imprimer"
             target="_blank"
@@ -108,7 +110,11 @@ export default async function ModelePage({ searchParams }: { searchParams: Promi
               <Input name="fee" label="Frais mensuel par enfant (USD)" value={a.fee} />
               <Input name="reductionPct" label="Réduction places solidaires (%)" value={a.reductionPct} />
               <Input name="samedisParMois" label="Samedis par mois" value={a.samedisParMois} />
-              <Input name="heuresSeance" label="Durée d'une séance (h)" value={a.heuresSeance} />
+              <div className="block text-sm">
+                <span className="font-semibold">Durée d&apos;une séance (h)</span>
+                <p className="mt-1.5 rounded-xl bg-sky/60 px-3 py-2 font-bold tabular-nums">{a.heuresSeance.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} h</p>
+                <span className="mt-1 block text-xs text-ink/55">Calculée à partir des horaires (Réglages).</span>
+              </div>
               <Input name="tauxAnimateur" label="Taux horaire animateur (USD)" value={a.tauxAnimateur} />
               <Input name="enfantsParAnimateur" label="Enfants par animateur" value={a.enfantsParAnimateur} />
               <Input name="salleMois" label="Salle par mois (USD)" value={a.salleMois} />

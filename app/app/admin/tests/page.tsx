@@ -1,3 +1,4 @@
+import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
@@ -20,7 +21,9 @@ export default async function TestsPage({ searchParams }: { searchParams: Promis
           ← Espace équipe
         </Link>
         <AdminNav current="/admin/tests" />
-        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Tests d&apos;entrée et de sortie</h1>
+        <div className="mt-5">
+          <PageIntro eyebrow="Espace équipe" title="Tests d&apos;entrée et de sortie" />
+        </div>
         <p className="mt-2 max-w-3xl text-sm text-ink/65">
           Un test au début du pilote (entrée) et un à la fin (sortie). Pour chaque compétence, cochez
           « réussi » si l&apos;enfant la réalise seul. La progression apparaît sur la fiche de l&apos;enfant.

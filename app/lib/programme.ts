@@ -15,22 +15,22 @@ export type Track = {
   slogan: string;
   sessions: Session[];
   variant?: string;
+  electronique: { titre: string; points: string[] };
 };
-
-export const SESSION_STRUCTURE = [
-  { label: "Accueil et rappel", minutes: 10 },
-  { label: "Découverte", minutes: 20 },
-  { label: "Pratique en équipe", minutes: 60 },
-  { label: "Pause", minutes: 10 },
-  { label: "Défi et partage", minutes: 15 },
-  { label: "Rangement et inventaire du matériel", minutes: 5 },
-];
 
 export const TRACKS: Track[] = [
   {
     name: "Éveil",
     ages: "5-7 ans",
     slogan: "Je commande un robot",
+    electronique: {
+      titre: "Électronique sans soudure",
+      points: [
+        "Un circuit simple : pile, LED et interrupteur, montés à la main sur un support en carton.",
+        "Découverte des capteurs de lumière et de son avec le kit micro:bit, en démonstration.",
+        "Règles de sécurité : pas de court-circuit, on vérifie le circuit avant d'allumer.",
+      ],
+    },
     sessions: [
       { n: 1, theme: "Donner un ordre", activity: "Jeu « le robot humain » : un enfant guide un camarade avec des flèches", tools: "Cartes flèches, ruban adhésif au sol", offline: "oui" },
       { n: 2, theme: "Séquences", activity: "Écrire un chemin avec des cartes, le faire exécuter", tools: "Cartes de codage, grille au sol", offline: "oui" },
@@ -44,6 +44,14 @@ export const TRACKS: Track[] = [
     name: "Explorateur",
     ages: "8-10 ans",
     slogan: "Je crée avec Scratch et micro:bit",
+    electronique: {
+      titre: "Circuits avec micro:bit",
+      points: [
+        "Brancher une LED et un bouton sur la micro:bit, puis programmer la réaction.",
+        "Lire un capteur (lumière, température) et afficher sa valeur à l'écran.",
+        "Monter un petit circuit sur plaque d'essai (breadboard) et comprendre le rôle de la résistance.",
+      ],
+    },
     sessions: [
       { n: 1, theme: "Premiers blocs", activity: "Faire bouger et parler un personnage", tools: "Scratch" },
       { n: 2, theme: "Boucles", activity: "Dessiner une figure avec une boucle, danse animée", tools: "Scratch" },
@@ -57,6 +65,14 @@ export const TRACKS: Track[] = [
     name: "Créateur",
     ages: "11-12 ans",
     slogan: "Code, électronique et IA",
+    electronique: {
+      titre: "Arduino et capteurs",
+      points: [
+        "Câbler une LED et la faire clignoter avec Arduino, sur plaque d'essai.",
+        "Lire un capteur de distance et piloter un moteur à partir de la mesure.",
+        "Lire un schéma électronique simple avant de monter le circuit.",
+      ],
+    },
     sessions: [
       { n: 1, theme: "Python, premiers pas", activity: "Afficher, demander un nom, calculer", tools: "Python (hors ligne possible)" },
       { n: 2, theme: "Décisions et boucles", activity: "Mini-quiz et jeu de devinette", tools: "Python" },

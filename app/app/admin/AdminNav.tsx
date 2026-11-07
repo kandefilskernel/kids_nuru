@@ -11,13 +11,18 @@ const ITEMS = [
   { href: "/admin/enseignants", label: "Enseignants" },
   { href: "/admin/dossiers", label: "Dossiers" },
   { href: "/admin/modele", label: "Modèle" },
+  { href: "/admin/financement", label: "Financement" },
+  { href: "/admin/risque", label: "Risque" },
+  { href: "/admin/equipe", label: "Équipe" },
+  { href: "/admin/taches", label: "Tâches" },
   { href: "/admin/export", label: "Export CSV" },
 ];
 
-export default function AdminNav({ current }: { current: string }) {
+export default function AdminNav({ current, member = false }: { current: string; member?: boolean }) {
+  const items = member ? ITEMS.filter((i) => i.href === "/admin/taches") : ITEMS;
   return (
     <nav className="mt-4 flex flex-wrap gap-1.5 text-sm" aria-label="Espace équipe">
-      {ITEMS.map((i) => (
+      {items.map((i) => (
         <Link
           key={i.href}
           href={i.href}

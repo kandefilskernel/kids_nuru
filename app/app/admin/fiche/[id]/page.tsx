@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/auth";
 import {
   getChildHistory,
   getPaymentsForRegistrations,
+  getAccessCode,
   getRegistration,
   getSkillTests,
   SKILLS,
@@ -33,6 +34,7 @@ export default async function FichePage({
     getPaymentsForRegistrations([r.id]),
   ]);
   const mine = paymentsById[r.id] ?? [];
+  const accessCode = await getAccessCode(r.id);
   const points = history.reduce((s, h) => s + (h.present ? 1 : 0) + (h.challenge ? 1 : 0) + (h.helped ? 1 : 0), 0);
   const fmtDate = (d: string) =>
     new Date(`${d}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -46,6 +48,11 @@ export default async function FichePage({
 
       <h1 className="text-2xl font-extrabold">Fiche enfant — Kids Tech-nuru Lab</h1>
       <p className="text-sm text-ink/60">Pilote · {r.level}</p>
+      <p className="mt-2 text-sm print:hidden">
+        <span className="text-ink/60">Code de suivi parent :</span>{" "}
+        <span className="font-mono font-bold tracking-widest">{accessCode ?? "—"}</span>
+        <span className="ml-2 text-xs text-ink/50">(à transmettre au parent, avec son téléphone, pour suivre l&apos;évolution sur /parent)</span>
+      </p>
 
       <form action={updateChildFlagsAction} className="mt-6 flex flex-wrap items-end gap-3 border border-black/20 p-4 text-sm print:hidden">
         <input type="hidden" name="id" value={r.id} />

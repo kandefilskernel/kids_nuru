@@ -1,10 +1,12 @@
+import PageIntro from "@/components/PageIntro";
+import { getSetting } from "@/lib/db";
+import { parseSchedule } from "@/lib/schedule";
 import { submitSurvey } from "./actions";
 
 export const metadata = { title: "Questionnaire parents · Kids Tech-nuru Lab" };
 export const dynamic = "force-dynamic";
 
 const INTERESTS = ["Très intéressé", "Intéressé", "Peu", "Pas du tout"];
-const SLOTS = ["Samedi matin", "Samedi après-midi", "Dimanche", "Mercredi après-midi", "Vacances"];
 const PAYMENTS = ["Mobile money", "Espèces", "Virement", "Autre"];
 const PILOT = ["Oui", "Peut-être", "Non"];
 
@@ -44,6 +46,8 @@ export default async function SondagePage({
   searchParams: Promise<{ merci?: string; error?: string }>;
 }) {
   const { merci, error } = await searchParams;
+  // Créneaux définis par l'équipe dans l'espace admin (Réglages).
+  const slots = parseSchedule(await getSetting("session_schedule")).slots;
 
   if (merci === "1") {
     return (
@@ -59,12 +63,10 @@ export default async function SondagePage({
   return (
     <div className="bg-dots-dark bg-sky/50">
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <p className="text-sm font-bold uppercase tracking-widest text-brand">Questionnaire 5 minutes</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Aidez-nous à construire l&apos;atelier</h1>
-        <p className="mt-3 text-ink/70">
+        <PageIntro eyebrow="Questionnaire 5 minutes" title="Aidez-nous à construire l&apos;atelier">
           Kids Tech-nuru Lab est un centre extrascolaire où les enfants de 5 à 12 ans apprennent la programmation,
           la robotique et l&apos;intelligence artificielle par le jeu. Quelques questions pour adapter l&apos;offre aux familles.
-        </p>
+        </PageIntro>
 
         <form action={submitSurvey} className="mt-8 space-y-6">
           <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink/10 space-y-4">
@@ -92,7 +94,7 @@ export default async function SondagePage({
           <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink/10">
             <h2 className="text-lg font-extrabold">Organisation</h2>
             <p className="mt-3 text-sm font-semibold">Meilleur créneau</p>
-            <Radio name="bestSlot" options={SLOTS} />
+            <Radio name="bestSlot" options={slots} />
           </section>
 
           <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink/10 space-y-4">

@@ -1,5 +1,7 @@
 import { Pool } from "pg";
 import { randomUUID } from "crypto";
+import type { Apport, Financeur, FinanceurType, Nature } from "@/lib/finance";
+import { newAccessCode } from "./parent";
 
 export type Level = "Éveil" | "Explorateur" | "Créateur";
 
@@ -186,12 +188,54 @@ ALTER TABLE gallery ADD COLUMN IF NOT EXISTS storage_key TEXT;
 ALTER TABLE dossiers ADD COLUMN IF NOT EXISTS storage_key TEXT;
 ALTER TABLE dossiers ALTER COLUMN data DROP NOT NULL;
 ALTER TABLE teacher_requests ADD COLUMN IF NOT EXISTS storage_key TEXT;
+CREATE TABLE IF NOT EXISTS team_users (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  username TEXT NOT NULL UNIQUE,
+  display_name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT true
+);
+CREATE TABLE IF NOT EXISTS tasks (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  assignee_id BIGINT REFERENCES team_users(id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'À faire',
+  due_date DATE,
+  done_at TIMESTAMPTZ
+);
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS access_code TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS registrations_access_code ON registrations (access_code);
+CREATE TABLE IF NOT EXISTS financeurs (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  name TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'financeur',
+  contact TEXT NOT NULL DEFAULT '',
+  note TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS apports (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  financeur_id BIGINT NOT NULL REFERENCES financeurs(id) ON DELETE CASCADE,
+  amount NUMERIC(14,2) NOT NULL CHECK (amount > 0),
+  currency TEXT NOT NULL CHECK (currency IN ('USD','CDF')),
+  apport_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  nature TEXT NOT NULL DEFAULT 'capital',
+  expense_id BIGINT REFERENCES expenses(id) ON DELETE SET NULL,
+  note TEXT NOT NULL DEFAULT ''
+);
 `;
 
 async function db(): Promise<Pool> {
   const p = pool();
   if (!g.__ready) {
-    g.__ready = p.query(SCHEMA).then(() => undefined);
+    g.__ready = p
+      .query(SCHEMA)
+      .then(() => backfillAccessCodes(p))
+      .then(() => undefined);
     g.__ready.catch(() => {
       g.__ready = undefined;
     });
@@ -299,10 +343,72 @@ export async function addRegistration(r: Omit<Registration, "id" | "createdAt">)
   const p = await db();
   await p.query(
     `INSERT INTO registrations
-     (id, child_name, age, level, school, health, parent_name, phone, momo_number, emergency_contact, photo_consent, gender, solidarity)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-    [randomUUID(), r.childName, r.age, r.level, r.school, r.health, r.parentName, r.phone, r.momoNumber, r.emergencyContact, r.photoConsent, r.gender, r.solidarity],
+     (id, child_name, age, level, school, health, parent_name, phone, momo_number, emergency_contact, photo_consent, gender, solidarity, access_code)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+    [randomUUID(), r.childName, r.age, r.level, r.school, r.health, r.parentName, r.phone, r.momoNumber, r.emergencyContact, r.photoConsent, r.gender, r.solidarity, newAccessCode()],
   );
+}
+
+/** Donne un code de suivi aux inscrits qui n'en ont pas encore (inscriptions antérieures). */
+async function backfillAccessCodes(p: Pool) {
+  const r = await p.query<{ id: string }>("SELECT id FROM registrations WHERE access_code IS NULL");
+  for (const row of r.rows) {
+    await p.query("UPDATE registrations SET access_code = $2 WHERE id = $1 AND access_code IS NULL", [row.id, newAccessCode()]);
+  }
+}
+
+/** Code de suivi d'un enfant (pour l'équipe). */
+export async function getAccessCode(id: string): Promise<string | null> {
+  const p = await db();
+  const r = await p.query<{ access_code: string | null }>("SELECT access_code FROM registrations WHERE id = $1", [id]);
+  return r.rows[0]?.access_code ?? null;
+}
+
+/** Inscrit à partir de son code de suivi (pour la connexion parent). */
+export async function getRegistrationByCode(code: string): Promise<{ id: string; phone: string; childName: string } | null> {
+  const p = await db();
+  const r = await p.query<{ id: string; phone: string; child_name: string }>(
+    "SELECT id, phone, child_name FROM registrations WHERE access_code = $1",
+    [code],
+  );
+  const x = r.rows[0];
+  return x ? { id: x.id, phone: x.phone, childName: x.child_name } : null;
+}
+
+/** Tentatives de connexion parent bloquées pour cette adresse ? Renvoie les minutes à attendre (0 = autorisé). */
+export async function parentLockMinutes(ip: string): Promise<number> {
+  const p = await db();
+  const r = await p.query<{ n: string; oldest: Date | null }>(
+    `SELECT count(*) n, min(at) oldest FROM login_failures
+     WHERE ip = $1 AND at > now() - make_interval(mins => $2)`,
+    [`parent:${ip}`, LOGIN_WINDOW_MIN],
+  );
+  if (Number(r.rows[0].n) < LOGIN_MAX_PER_IP || !r.rows[0].oldest) return 0;
+  const unlockAt = r.rows[0].oldest.getTime() + LOGIN_WINDOW_MIN * 60_000;
+  return Math.max(1, Math.ceil((unlockAt - Date.now()) / 60_000));
+}
+
+export async function recordParentFailure(ip: string) {
+  const p = await db();
+  await p.query("INSERT INTO login_failures (ip) VALUES ($1)", [`parent:${ip}`]);
+}
+
+/** Projets de la galerie d'un enfant (titre et description ; la photo passe par la route existante). */
+export async function getGalleryForRegistration(registrationId: string) {
+  const p = await db();
+  const r = await p.query<{ id: string; title: string; description: string; photo_consent: boolean; has_photo: boolean }>(
+    `SELECT g.id::text, g.title, g.description, r.photo_consent, (g.photo IS NOT NULL OR g.storage_key IS NOT NULL) AS has_photo
+     FROM gallery g JOIN registrations r ON r.id = g.registration_id
+     WHERE g.registration_id = $1 ORDER BY g.created_at`,
+    [registrationId],
+  );
+  return r.rows.map((x) => ({
+    id: x.id,
+    title: x.title,
+    description: x.description,
+    hasPhoto: x.has_photo,
+    photoConsent: x.photo_consent === true,
+  }));
 }
 
 /** Annule un paiement (le reçu et son numéro sont conservés). Renvoie false s'il n'existe pas ou est déjà annulé. */
@@ -1015,4 +1121,184 @@ export async function getAllChildHistory(): Promise<Record<string, HistoryRow[]>
     (out[x.registration_id] ??= []).push({ date: x.d, present: x.present, challenge: x.challenge_done, helped: x.helped_peer });
   }
   return out;
+}
+
+// ---------- Financement : financeurs, actionnaires et apports ----------
+
+export async function getFinanceurs(): Promise<Financeur[]> {
+  const p = await db();
+  const r = await p.query<{ id: string; name: string; type: string; contact: string; note: string }>(
+    "SELECT id::text, name, type, contact, note FROM financeurs ORDER BY created_at",
+  );
+  return r.rows.map((x) => ({ id: x.id, name: x.name, type: x.type as FinanceurType, contact: x.contact, note: x.note }));
+}
+
+export async function addFinanceur(x: { name: string; type: FinanceurType; contact: string; note: string }) {
+  const p = await db();
+  await p.query("INSERT INTO financeurs (name, type, contact, note) VALUES ($1,$2,$3,$4)", [x.name, x.type, x.contact, x.note]);
+}
+
+export async function removeFinanceur(id: string) {
+  const p = await db();
+  await p.query("DELETE FROM financeurs WHERE id = $1", [id]);
+}
+
+export async function getApports(): Promise<Apport[]> {
+  const p = await db();
+  const r = await p.query<{
+    id: string; financeur_id: string; amount: string; currency: "USD" | "CDF";
+    apport_date: string; nature: string; expense_id: string | null; note: string;
+  }>(
+    `SELECT id::text, financeur_id::text, amount, currency,
+            to_char(apport_date, 'YYYY-MM-DD') AS apport_date, nature, expense_id::text, note
+     FROM apports ORDER BY apport_date, id`,
+  );
+  return r.rows.map((x) => ({
+    id: x.id,
+    financeurId: x.financeur_id,
+    amount: Number(x.amount),
+    currency: x.currency,
+    date: x.apport_date,
+    nature: x.nature as Nature,
+    expenseId: x.expense_id,
+    note: x.note,
+  }));
+}
+
+export async function addApport(x: {
+  financeurId: string; amount: number; currency: "USD" | "CDF"; date: string;
+  nature: Nature; expenseId: string | null; note: string;
+}) {
+  const p = await db();
+  await p.query(
+    `INSERT INTO apports (financeur_id, amount, currency, apport_date, nature, expense_id, note)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [x.financeurId, x.amount, x.currency, x.date, x.nature, x.expenseId, x.note],
+  );
+}
+
+export async function removeApport(id: string) {
+  const p = await db();
+  await p.query("DELETE FROM apports WHERE id = $1", [id]);
+}
+
+// ---------- Équipe : comptes des membres et tâches ----------
+
+export type TeamUser = { id: string; username: string; name: string; active: boolean; passwordHash: string; createdAt: string };
+
+type TeamRow = { id: string; username: string; display_name: string; active: boolean; password_hash: string; created_at: Date };
+
+function toTeamUser(x: TeamRow): TeamUser {
+  return {
+    id: x.id,
+    username: x.username,
+    name: x.display_name,
+    active: x.active,
+    passwordHash: x.password_hash,
+    createdAt: x.created_at.toISOString(),
+  };
+}
+
+export async function getTeamUsers(): Promise<TeamUser[]> {
+  const p = await db();
+  const r = await p.query<TeamRow>("SELECT id::text, username, display_name, active, password_hash, created_at FROM team_users ORDER BY created_at");
+  return r.rows.map(toTeamUser);
+}
+
+export async function getTeamUser(id: string): Promise<TeamUser | null> {
+  if (!/^\d+$/.test(id)) return null;
+  const p = await db();
+  const r = await p.query<TeamRow>("SELECT id::text, username, display_name, active, password_hash, created_at FROM team_users WHERE id = $1", [id]);
+  return r.rows[0] ? toTeamUser(r.rows[0]) : null;
+}
+
+export async function getTeamUserByUsername(username: string): Promise<TeamUser | null> {
+  const p = await db();
+  const r = await p.query<TeamRow>("SELECT id::text, username, display_name, active, password_hash, created_at FROM team_users WHERE username = $1", [username]);
+  return r.rows[0] ? toTeamUser(r.rows[0]) : null;
+}
+
+export async function addTeamUser(x: { username: string; name: string; passwordHash: string }) {
+  const p = await db();
+  await p.query("INSERT INTO team_users (username, display_name, password_hash) VALUES ($1,$2,$3)", [x.username, x.name, x.passwordHash]);
+}
+
+export async function setTeamUserActive(id: string, active: boolean) {
+  const p = await db();
+  await p.query("UPDATE team_users SET active = $2 WHERE id = $1", [id, active]);
+}
+
+export async function setTeamUserPassword(id: string, passwordHash: string) {
+  const p = await db();
+  await p.query("UPDATE team_users SET password_hash = $2 WHERE id = $1", [id, passwordHash]);
+}
+
+export type Task = {
+  id: string;
+  title: string;
+  description: string;
+  assigneeId: string | null;
+  assigneeName: string | null;
+  status: string;
+  dueDate: string | null;
+  createdAt: string;
+};
+
+const TASK_SELECT = `SELECT t.id::text, t.title, t.description, t.assignee_id::text, u.display_name AS assignee_name,
+  t.status, to_char(t.due_date, 'YYYY-MM-DD') AS due_date, t.created_at
+  FROM tasks t LEFT JOIN team_users u ON u.id = t.assignee_id`;
+
+type TaskRow = {
+  id: string; title: string; description: string; assignee_id: string | null; assignee_name: string | null;
+  status: string; due_date: string | null; created_at: Date;
+};
+
+function toTask(x: TaskRow): Task {
+  return {
+    id: x.id,
+    title: x.title,
+    description: x.description,
+    assigneeId: x.assignee_id,
+    assigneeName: x.assignee_name,
+    status: x.status,
+    dueDate: x.due_date,
+    createdAt: x.created_at.toISOString(),
+  };
+}
+
+/** Toutes les tâches, ou seulement celles d'un membre. */
+export async function listTasks(assigneeId?: string): Promise<Task[]> {
+  const p = await db();
+  const r = assigneeId
+    ? await p.query<TaskRow>(`${TASK_SELECT} WHERE t.assignee_id = $1 ORDER BY t.due_date NULLS LAST, t.created_at`, [assigneeId])
+    : await p.query<TaskRow>(`${TASK_SELECT} ORDER BY t.due_date NULLS LAST, t.created_at`);
+  return r.rows.map(toTask);
+}
+
+export async function getTask(id: string): Promise<Task | null> {
+  if (!/^\d+$/.test(id)) return null;
+  const p = await db();
+  const r = await p.query<TaskRow>(`${TASK_SELECT} WHERE t.id = $1`, [id]);
+  return r.rows[0] ? toTask(r.rows[0]) : null;
+}
+
+export async function addTask(x: { title: string; description: string; assigneeId: string | null; dueDate: string | null }) {
+  const p = await db();
+  await p.query(
+    "INSERT INTO tasks (title, description, assignee_id, due_date) VALUES ($1,$2,$3,$4)",
+    [x.title, x.description, x.assigneeId, x.dueDate],
+  );
+}
+
+export async function setTaskStatus(id: string, status: string) {
+  const p = await db();
+  await p.query(
+    "UPDATE tasks SET status = $2, done_at = CASE WHEN $2 = 'Fait' THEN now() ELSE NULL END WHERE id = $1",
+    [id, status],
+  );
+}
+
+export async function removeTask(id: string) {
+  const p = await db();
+  await p.query("DELETE FROM tasks WHERE id = $1", [id]);
 }
