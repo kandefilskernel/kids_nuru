@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { Logo } from "@/components/art";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,11 +17,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-20 border-b border-ink/10 bg-white/85 backdrop-blur print:hidden">
           <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Logo />
-              <span className="text-lg font-extrabold tracking-tight text-ink">
-                Kids Tech<span className="text-brand">-nuru</span> Lab
-              </span>
+            <Link href="/" className="flex items-center" aria-label="Kids Tech-nuru Lab, accueil">
+              <Image
+                src="/brand/kids-nuru-logo.svg"
+                alt="Kids Tech-nuru Lab"
+                width={430}
+                height={150}
+                priority
+                className="h-11 w-auto sm:h-12"
+              />
             </Link>
             <div className="flex items-center gap-1 text-sm font-medium sm:gap-5">
               <Link href="/programme" className="hidden rounded px-2 py-1 hover:text-brand md:block">Programme</Link>
@@ -44,12 +48,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <footer className="bg-ink text-white/80 print:hidden">
           <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2.5">
-              <Logo size={30} />
-              <div>
-                <p className="font-bold text-white">Kids Tech-nuru Lab</p>
-                <p className="text-xs">Centre de formation extrascolaire · Lubumbashi</p>
-              </div>
+            <div>
+              <Image
+                src="/brand/kids-nuru-logo-blanc.svg"
+                alt="Kids Tech-nuru Lab"
+                width={430}
+                height={150}
+                className="h-12 w-auto"
+              />
+              <p className="mt-1 text-xs">Centre de formation extrascolaire · Lubumbashi</p>
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
               <Link href="/inscription" className="hover:text-white">Inscription</Link>

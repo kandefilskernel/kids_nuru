@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 150" role="img" aria-label="Kids Tech-nuru Lab">
+  <title>Kids Tech-nuru Lab (fond sombre)</title>
+  <g transform="translate(6 12)">
+    <path d="M44 20 A20 20 0 0 1 76 20" fill="none" stroke="#ff6b5b" stroke-width="6" stroke-linecap="round"/>
+    <path d="M51 28 A10 10 0 0 1 69 28" fill="none" stroke="#ff6b5b" stroke-width="6" stroke-linecap="round"/>
+    <line x1="60" y1="34" x2="60" y2="44" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="60" cy="34" r="5" fill="#ffc233"/>
+    <rect x="4" y="66" width="12" height="26" rx="6" fill="#ffc233"/>
+    <rect x="104" y="66" width="12" height="26" rx="6" fill="#ffc233"/>
+    <rect x="12" y="44" width="96" height="74" rx="24" fill="#ffffff"/>
+    <rect x="24" y="56" width="72" height="48" rx="15" fill="#0e1647"/>
+    <circle cx="46" cy="77" r="7.5" fill="#19c9a0"/>
+    <circle cx="74" cy="77" r="7.5" fill="#19c9a0"/>
+    <path d="M50 91 Q60 98 70 91" fill="none" stroke="#19c9a0" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <g font-family="'Segoe UI Variable','Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif">
+    <text x="146" y="50" font-size="30" font-weight="800" fill="#ff6b5b">Kids</text>
+    <text x="144" y="104" font-size="56" font-weight="900" letter-spacing="-1" fill="#ffffff">Tech-<tspan fill="#8fa2ff">nuru</tspan></text>
+    <rect x="146" y="116" width="70" height="26" rx="13" fill="#ffc233"/>
+    <text x="183" y="135" font-size="17" font-weight="800" letter-spacing="4" text-anchor="middle" fill="#0e1647">LAB</text>
+  </g>
+</svg>
