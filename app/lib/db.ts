@@ -227,6 +227,23 @@ CREATE TABLE IF NOT EXISTS apports (
   expense_id BIGINT REFERENCES expenses(id) ON DELETE SET NULL,
   note TEXT NOT NULL DEFAULT ''
 );
+CREATE TABLE IF NOT EXISTS waitlist (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  child_name TEXT NOT NULL,
+  age SMALLINT NOT NULL CHECK (age BETWEEN 5 AND 12),
+  level TEXT NOT NULL,
+  school TEXT NOT NULL DEFAULT '',
+  health TEXT NOT NULL DEFAULT '',
+  parent_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  momo_number TEXT NOT NULL DEFAULT '',
+  emergency_contact TEXT NOT NULL DEFAULT '',
+  photo_consent BOOLEAN NOT NULL DEFAULT false,
+  gender TEXT NOT NULL DEFAULT '',
+  solidarity BOOLEAN NOT NULL DEFAULT false
+);
+CREATE INDEX IF NOT EXISTS waitlist_level_created ON waitlist (level, created_at);
 `;
 
 async function db(): Promise<Pool> {
@@ -1301,4 +1318,83 @@ export async function setTaskStatus(id: string, status: string) {
 export async function removeTask(id: string) {
   const p = await db();
   await p.query("DELETE FROM tasks WHERE id = $1", [id]);
+}
+
+// ---------- Liste d'attente ----------
+
+export type WaitlistEntry = Omit<Registration, "id" | "createdAt"> & { id: string; createdAt: string };
+
+type WaitRow = RegRow; // mêmes colonnes ; id BIGINT renvoyé en texte par pg
+
+function toWaitlistEntry(x: WaitRow): WaitlistEntry {
+  const r = toRegistration(x);
+  return { ...r, id: x.id };
+}
+
+/** Ajoute un enfant à la liste d'attente de son niveau ; renvoie sa position dans ce niveau. */
+export async function addToWaitlist(r: Omit<Registration, "id" | "createdAt">): Promise<number> {
+  const p = await db();
+  await p.query(
+    `INSERT INTO waitlist
+     (child_name, age, level, school, health, parent_name, phone, momo_number, emergency_contact, photo_consent, gender, solidarity)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    [r.childName, r.age, r.level, r.school, r.health, r.parentName, r.phone, r.momoNumber, r.emergencyContact, r.photoConsent, r.gender, r.solidarity],
+  );
+  const n = await p.query<{ n: string }>("SELECT count(*) n FROM waitlist WHERE level = $1", [r.level]);
+  return Number(n.rows[0].n);
+}
+
+/** Liste d'attente, dans l'ordre d'arrivée. */
+export async function getWaitlist(): Promise<WaitlistEntry[]> {
+  const p = await db();
+  const r = await p.query<WaitRow>("SELECT * FROM waitlist ORDER BY created_at, id");
+  return r.rows.map((x) => toWaitlistEntry(x));
+}
+
+export async function removeFromWaitlist(id: string) {
+  const p = await db();
+  await p.query("DELETE FROM waitlist WHERE id = $1", [id]);
+}
+
+/**
+ * Inscrit un enfant de la liste d'attente s'il reste une place dans son niveau.
+ * Le verrou évite que deux promotions simultanées dépassent la capacité.
+ */
+export async function promoteFromWaitlist(
+  id: string,
+): Promise<{ ok: true; registrationId: string } | { ok: false; reason: "missing" | "full" }> {
+  const p = await db();
+  const c = await p.connect();
+  try {
+    await c.query("BEGIN");
+    await c.query("SELECT pg_advisory_xact_lock(hashtext('nuru:capacity'))");
+    const w = await c.query<WaitRow>("SELECT * FROM waitlist WHERE id = $1 FOR UPDATE", [id]);
+    if (!w.rows[0]) {
+      await c.query("ROLLBACK");
+      return { ok: false, reason: "missing" };
+    }
+    const e = toWaitlistEntry(w.rows[0]);
+    const registrationId = randomUUID();
+    const cap = await c.query<{ value: string }>("SELECT value FROM settings WHERE key = $1", [`capacity:${e.level}`]);
+    const capacity = cap.rows[0] ? Number(cap.rows[0].value) : DEFAULT_CAPACITY;
+    const count = await c.query<{ n: string }>("SELECT count(*) n FROM registrations WHERE level = $1", [e.level]);
+    if (Number(count.rows[0].n) >= capacity) {
+      await c.query("ROLLBACK");
+      return { ok: false, reason: "full" };
+    }
+    await c.query(
+      `INSERT INTO registrations
+       (id, child_name, age, level, school, health, parent_name, phone, momo_number, emergency_contact, photo_consent, gender, solidarity, access_code)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [registrationId, e.childName, e.age, e.level, e.school, e.health, e.parentName, e.phone, e.momoNumber, e.emergencyContact, e.photoConsent, e.gender, e.solidarity, newAccessCode()],
+    );
+    await c.query("DELETE FROM waitlist WHERE id = $1", [id]);
+    await c.query("COMMIT");
+    return { ok: true, registrationId };
+  } catch (err) {
+    await c.query("ROLLBACK").catch(() => undefined);
+    throw err;
+  } finally {
+    c.release();
+  }
 }

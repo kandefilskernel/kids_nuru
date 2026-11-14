@@ -1,8 +1,8 @@
 "use server";
 
-import { addRegistration, countByLevel, getCapacities, levelForAge } from "@/lib/db";
+import { addRegistration, addToWaitlist, countByLevel, getCapacities, levelForAge, type Registration } from "@/lib/db";
 
-export type FormState = { ok: boolean; error?: string; message?: string };
+export type FormState = { ok: boolean; waitlisted?: boolean; error?: string; message?: string };
 
 function str(f: FormData, k: string, max = 200) {
   return String(f.get(k) ?? "").trim().slice(0, max);
@@ -32,15 +32,7 @@ export async function register(_prev: FormState, f: FormData): Promise<FormState
     return { ok: false, error: "Merci d'indiquer si l'enfant est une fille ou un garçon." };
   }
 
-  const [capacity, counts] = await Promise.all([getCapacities(), countByLevel()]);
-  if (counts[level] >= capacity[level]) {
-    return {
-      ok: false,
-      error: `Le niveau ${level} est complet pour le moment. Contactez-nous sur WhatsApp pour la liste d'attente.`,
-    };
-  }
-
-  await addRegistration({
+  const child: Omit<Registration, "id" | "createdAt"> = {
     childName,
     age,
     level,
@@ -53,7 +45,22 @@ export async function register(_prev: FormState, f: FormData): Promise<FormState
     photoConsent: f.get("photoConsent") === "on",
     gender: genderRaw,
     solidarity: f.get("solidarity") === "on",
-  });
+  };
+
+  // Niveau complet : l'enfant passe en liste d'attente au lieu d'être refusé.
+  const [capacity, counts] = await Promise.all([getCapacities(), countByLevel()]);
+  if (counts[level] >= capacity[level]) {
+    const position = await addToWaitlist(child);
+    return {
+      ok: true,
+      waitlisted: true,
+      message:
+        `Le niveau ${level} est complet pour le moment : ${childName} est inscrit(e) sur la liste d'attente ` +
+        `(position ${position}). Nous vous contacterons sur WhatsApp dès qu'une place se libère.`,
+    };
+  }
+
+  await addRegistration(child);
 
   return {
     ok: true,

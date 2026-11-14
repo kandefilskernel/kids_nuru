@@ -2,6 +2,8 @@ import Link from "next/link";
 
 const ITEMS = [
   { href: "/admin", label: "Inscrits" },
+  { href: "/admin/attente", label: "Liste d'attente" },
+  { href: "/admin/calendrier", label: "Calendrier" },
   { href: "/admin/presence", label: "Présence" },
   { href: "/admin/budget", label: "Budget" },
   { href: "/admin/sondage", label: "Sondage" },

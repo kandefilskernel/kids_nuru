@@ -52,3 +52,27 @@ export function reminderUrl(phone: string, parentName: string, childName: string
   if (!n) return null;
   return `https://wa.me/${n}?text=${encodeURIComponent(reminderMessage(parentName, childName, month))}`;
 }
+
+/** Lien WhatsApp pré-rempli vers un numéro, ou null si le numéro est inexploitable. */
+export function whatsappUrl(phone: string, text: string) {
+  const n = normalizePhone(phone);
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(text)}` : null;
+}
+
+/** Message au parent : une place s'est libérée et l'enfant est inscrit. */
+export function waitlistPlaceMessage(parentName: string, childName: string, level: string) {
+  return (
+    `Bonjour ${parentName}, ici Kids Tech-nuru Lab. ` +
+    `Bonne nouvelle : une place s'est libérée au niveau ${level} et ${childName} est maintenant inscrit(e) à l'atelier. ` +
+    `Nous vous envoyons très vite les horaires et votre code de suivi. Merci de votre patience !`
+  );
+}
+
+/** Message au parent : l'enfant est bien sur la liste d'attente. */
+export function waitlistAckMessage(parentName: string, childName: string, level: string, position: number) {
+  return (
+    `Bonjour ${parentName}, ici Kids Tech-nuru Lab. ` +
+    `Nous avons bien reçu la demande pour ${childName} (niveau ${level}). Le niveau est complet pour le moment : ` +
+    `${childName} est en position ${position} sur la liste d'attente. Nous vous prévenons dès qu'une place se libère.`
+  );
+}

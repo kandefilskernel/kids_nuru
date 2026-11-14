@@ -70,7 +70,9 @@ export default function RegisterForm() {
             <path d="M5 12.5l4.5 4.5L19 7.5" />
           </svg>
         </span>
-        <h3 className="mt-4 text-2xl font-extrabold">Merci, c&apos;est enregistré !</h3>
+        <h3 className="mt-4 text-2xl font-extrabold">
+          {state.waitlisted ? "Merci, vous êtes sur la liste d'attente" : "Merci, c'est enregistré !"}
+        </h3>
         <p className="mt-2 text-ink/75">{state.message}</p>
       </div>
     );

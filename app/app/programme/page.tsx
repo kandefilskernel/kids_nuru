@@ -3,6 +3,7 @@ import { CreateurArt, EveilArt, ExplorateurArt } from "@/components/art";
 import { EVALUATION, PLAN_B, TRACKS, type Track } from "@/lib/programme";
 import { parseSchedule, timetable, totalMinutes } from "@/lib/schedule";
 import { getSetting } from "@/lib/db";
+import { formatLongDate, nextSession, parsePilotDates, todayLubumbashi, ucfirst } from "@/lib/calendar";
 
 export const metadata = { title: "Programme détaillé · Kids Tech-nuru Lab" };
 
@@ -51,7 +52,11 @@ const fmtDuration = (min: number) => (min % 60 === 0 ? `${min / 60} heure${min >
 
 export default async function ProgrammePage() {
   // Horaires définis par l'équipe dans l'espace admin (Réglages).
-  const schedule = parseSchedule(await getSetting("session_schedule"));
+  const [rawSchedule, rawDates] = await Promise.all([getSetting("session_schedule"), getSetting("pilot_dates")]);
+  const schedule = parseSchedule(rawSchedule);
+  const dates = parsePilotDates(rawDates);
+  const today = todayLubumbashi();
+  const next = nextSession(dates, today);
   const rows = timetable(schedule);
   const TOTAL_MIN = totalMinutes(schedule);
   return (
@@ -133,6 +138,45 @@ export default async function ProgrammePage() {
             ))}
           </ol>
         </section>
+
+        {/* Calendrier du pilote */}
+        {dates.length > 0 && (
+          <section className="mt-8 rounded-3xl bg-white p-6 shadow-md ring-1 ring-ink/10 sm:p-8">
+            <p className="text-sm font-bold uppercase tracking-widest text-brand">Calendrier du pilote</p>
+            <h2 className="mt-1 text-2xl font-extrabold">
+              {dates.length} samedi{dates.length > 1 ? "s" : ""}
+              {schedule.start ? `, à partir de ${schedule.start.replace(":", "h")}` : ""}
+            </h2>
+            <ol className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {dates.map((d, i) => {
+                const past = d < today;
+                const isNext = next?.date === d;
+                return (
+                  <li
+                    key={d}
+                    className={`flex items-center gap-3 rounded-2xl p-3 ring-1 ${
+                      isNext ? "bg-accent/20 ring-accent" : past ? "bg-ink/5 text-ink/50 ring-ink/10" : "bg-sky/60 ring-ink/10"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white ${
+                        past ? "bg-ink/30" : "bg-brand"
+                      }`}
+                    >
+                      S{i + 1}
+                    </span>
+                    <span className="text-sm">
+                      <span className="block font-bold">{ucfirst(formatLongDate(d))}</span>
+                      <span className="text-xs">
+                        {isNext ? "Prochaine séance" : past ? "Séance passée" : i === dates.length - 1 ? "Projet final" : "À venir"}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
 
         {/* Un parcours par niveau */}
         {TRACKS.map((t) => {

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
 import {
   getChildHistory,
+  getGalleryForRegistration,
   getPaymentsForRegistrations,
   getAccessCode,
   getRegistration,
@@ -11,6 +12,8 @@ import {
 } from "@/lib/db";
 import { updateChildFlagsAction } from "../../actions";
 import PrintButton from "./PrintButton";
+import Badges from "@/components/Badges";
+import { computeBadges } from "@/lib/badges";
 
 export const metadata = { title: "Fiche enfant · Kids Tech-nuru Lab", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -28,12 +31,14 @@ export default async function FichePage({
   const r = await getRegistration(id);
   if (!r) notFound();
 
-  const [history, tests, paymentsById] = await Promise.all([
+  const [history, tests, paymentsById, projects] = await Promise.all([
     getChildHistory(r.id),
     getSkillTests().then((all) => all[r.id] ?? {}),
     getPaymentsForRegistrations([r.id]),
+    getGalleryForRegistration(r.id),
   ]);
   const mine = paymentsById[r.id] ?? [];
+  const badges = computeBadges({ history, tests, projects: projects.length });
   const accessCode = await getAccessCode(r.id);
   const points = history.reduce((s, h) => s + (h.present ? 1 : 0) + (h.challenge ? 1 : 0) + (h.helped ? 1 : 0), 0);
   const fmtDate = (d: string) =>
@@ -43,7 +48,10 @@ export default async function FichePage({
     <div className="mx-auto max-w-2xl px-4 py-8 print:max-w-none print:p-0">
       <div className="mb-6 flex items-center justify-between print:hidden">
         <Link href="/admin" className="text-sm underline">← Espace équipe</Link>
-        <PrintButton />
+        <span className="flex items-center gap-3">
+          <Link href={`/admin/attestation/${r.id}`} className="text-sm font-semibold underline">Attestation de fin</Link>
+          <PrintButton />
+        </span>
       </div>
 
       <h1 className="text-2xl font-extrabold">Fiche enfant — Kids Tech-nuru Lab</h1>
@@ -124,6 +132,13 @@ export default async function FichePage({
             <p className="mt-2 text-sm font-semibold">Total : {points} point(s) sur {history.length * 3}</p>
           </>
         )}
+      </section>
+
+      <section className="mt-4 border border-black/20 p-4 print:hidden">
+        <h2 className="font-bold">Badges</h2>
+        <div className="mt-2">
+          <Badges badges={badges} compact />
+        </div>
       </section>
 
       <section className="mt-4 border border-black/20 p-4">

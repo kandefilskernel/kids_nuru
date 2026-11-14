@@ -1,15 +1,21 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import Badges from "@/components/Badges";
 import PageIntro from "@/components/PageIntro";
+import { computeBadges } from "@/lib/badges";
 import {
   getChildHistory,
   getGalleryForRegistration,
   getPaymentsForRegistrations,
   getRegistration,
+  getSetting,
   getSkillTests,
   receiptNumber,
   SKILLS,
 } from "@/lib/db";
+import { formatLongDate, nextSession, parsePilotDates, sessionTheme, ucfirst } from "@/lib/calendar";
+import { parseSchedule } from "@/lib/schedule";
 import { PARENT_COOKIE, readParentSession } from "@/lib/parent";
 import { monthLabel } from "@/lib/whatsapp";
 import { parentLogoutAction } from "../actions";
@@ -28,18 +34,24 @@ export default async function ParentSuiviPage() {
   const r = await getRegistration(id);
   if (!r) notFound();
 
-  const [history, tests, payments, projects] = await Promise.all([
+  const [history, tests, payments, projects, rawDates, rawSchedule] = await Promise.all([
     getChildHistory(id),
     getSkillTests().then((all) => all[id] ?? {}),
     getPaymentsForRegistrations([id]).then((all) => all[id] ?? []),
     getGalleryForRegistration(id),
+    getSetting("pilot_dates"),
+    getSetting("session_schedule"),
   ]);
+  const next = nextSession(parsePilotDates(rawDates));
+  const start = parseSchedule(rawSchedule).start;
+  const nextTheme = next ? sessionTheme(r.level, next.n) : null;
 
   const presentCount = history.filter((h) => h.present).length;
   const challenges = history.filter((h) => h.challenge).length;
   const helped = history.filter((h) => h.helped).length;
   const points = presentCount + challenges + helped;
   const firstName = r.childName.trim().split(/\s+/)[0];
+  const badges = computeBadges({ history, tests, projects: projects.length });
 
   return (
     <div className="bg-dots-dark min-h-[calc(100vh-130px)] bg-sky/50">
@@ -64,6 +76,44 @@ export default async function ParentSuiviPage() {
           <Stat label="Entraide" value={`${helped}`} hint="aide donnée à un camarade" />
           <Stat label="Points du bilan" value={`${points}`} />
         </div>
+
+        {next && (
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-accent/60">
+            <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-accent text-ink">
+              <span className="text-[10px] font-bold uppercase">Séance</span>
+              <span className="text-xl font-black leading-none">{next.n}</span>
+            </span>
+            <span className="text-sm">
+              <span className="block text-xs font-bold uppercase tracking-wider text-ink/50">Prochaine séance</span>
+              <span className="block text-lg font-extrabold">
+                {ucfirst(formatLongDate(next.date))}
+                {start ? ` à ${start.replace(":", "h")}` : ""}
+              </span>
+              {nextTheme && <span className="text-ink/70">Au programme : {nextTheme}</span>}
+            </span>
+          </div>
+        )}
+
+        {tests.sortie && (
+          <Link
+            href="/parent/attestation"
+            className="flex items-center justify-between gap-3 rounded-2xl bg-brand p-5 text-white shadow-md hover:opacity-95"
+          >
+            <span>
+              <span className="block text-lg font-extrabold">🎓 L&apos;attestation de {firstName} est prête</span>
+              <span className="text-sm text-white/85">À imprimer ou à enregistrer en PDF.</span>
+            </span>
+            <span className="rounded-full bg-accent px-4 py-2 text-sm font-bold text-ink">Voir</span>
+          </Link>
+        )}
+
+        {/* Badges */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink/10">
+          <h2 className="text-lg font-extrabold">Badges de {firstName}</h2>
+          <div className="mt-1">
+            <Badges badges={badges} />
+          </div>
+        </section>
 
         {/* Compétences */}
         <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-ink/10">
