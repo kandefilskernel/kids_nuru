@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Kids Tech-nuru Lab : électronique, IA et systèmes embarqués">
+  <title>Kids Tech-nuru Lab (format rond, avec outils)</title>
+  <circle cx="160" cy="160" r="160" fill="#2740d6"/>
+  <circle cx="160" cy="160" r="148" fill="#ffffff"/>
+
+  <!-- Pistes de circuit imprimé : relient la puce et le réseau de neurones au robot -->
+  <g stroke="#2740d6" stroke-width="3" stroke-linecap="round" fill="none">
+    <line x1="86" y1="108" x2="110" y2="108"/>
+    <line x1="210" y1="108" x2="233" y2="108"/>
+  </g>
+
+  <!-- Système embarqué : microcontrôleur -->
+  <g>
+    <g stroke="#0e1647" stroke-width="3" stroke-linecap="round">
+      <line x1="58" y1="88" x2="58" y2="94"/><line x1="66" y1="88" x2="66" y2="94"/><line x1="74" y1="88" x2="74" y2="94"/>
+      <line x1="58" y1="122" x2="58" y2="128"/><line x1="66" y1="122" x2="66" y2="128"/><line x1="74" y1="122" x2="74" y2="128"/>
+      <line x1="46" y1="100" x2="52" y2="100"/><line x1="46" y1="108" x2="52" y2="108"/><line x1="46" y1="116" x2="52" y2="116"/>
+      <line x1="80" y1="100" x2="86" y2="100"/><line x1="80" y1="108" x2="86" y2="108"/><line x1="80" y1="116" x2="86" y2="116"/>
+    </g>
+    <rect x="52" y="94" width="28" height="28" rx="5" fill="#0e1647"/>
+    <rect x="59" y="101" width="14" height="14" rx="3" fill="none" stroke="#19c9a0" stroke-width="2.5"/>
+    <circle cx="57" cy="99" r="1.8" fill="#ffc233"/>
+  </g>
+
+  <!-- Intelligence artificielle : réseau de neurones -->
+  <g>
+    <g stroke="#19c9a0" stroke-width="2.5" stroke-linecap="round">
+      <line x1="238" y1="108" x2="254" y2="94"/><line x1="238" y1="108" x2="254" y2="122"/>
+      <line x1="254" y1="94" x2="270" y2="108"/><line x1="254" y1="122" x2="270" y2="108"/>
+      <line x1="254" y1="94" x2="254" y2="122"/>
+    </g>
+    <circle cx="238" cy="108" r="5.5" fill="#2740d6"/>
+    <circle cx="254" cy="94" r="5.5" fill="#ff6b5b"/>
+    <circle cx="254" cy="122" r="5.5" fill="#ff6b5b"/>
+    <circle cx="270" cy="108" r="5.5" fill="#ffc233"/>
+    <text x="254" y="146" font-family="'Segoe UI Variable','Segoe UI',system-ui,sans-serif" font-size="12" font-weight="900" text-anchor="middle" fill="#2740d6">IA</text>
+  </g>
+
+  <!-- Électronique : LED -->
+  <g transform="translate(-4 7)">
+    <g stroke="#ff6b5b" stroke-width="2" stroke-linecap="round">
+      <line x1="80" y1="232" x2="76" y2="228"/><line x1="92" y1="228" x2="92" y2="223"/><line x1="104" y1="232" x2="108" y2="228"/>
+    </g>
+    <path d="M84 254 V244 A8 8 0 0 1 100 244 V254 Z" fill="#ff6b5b"/>
+    <rect x="82" y="252" width="20" height="4" rx="2" fill="#e2503f"/>
+    <g stroke="#0e1647" stroke-width="2.5" stroke-linecap="round">
+      <line x1="88" y1="256" x2="88" y2="266"/><line x1="96" y1="256" x2="96" y2="270"/>
+    </g>
+  </g>
+
+  <!-- Électronique : résistance -->
+  <g>
+    <line x1="206" y1="250" x2="254" y2="250" stroke="#0e1647" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="217" y="243" width="26" height="14" rx="6" fill="#ffc233"/>
+    <g stroke="#0e1647" stroke-width="2.5">
+      <line x1="224" y1="243" x2="224" y2="257"/><line x1="230" y1="243" x2="230" y2="257"/><line x1="236" y1="243" x2="236" y2="257"/>
+    </g>
+  </g>
+
+  <!-- Mascotte -->
+  <g transform="translate(106 38) scale(0.9)">
+    <path d="M44 20 A20 20 0 0 1 76 20" fill="none" stroke="#ff6b5b" stroke-width="6" stroke-linecap="round"/>
+    <path d="M51 28 A10 10 0 0 1 69 28" fill="none" stroke="#ff6b5b" stroke-width="6" stroke-linecap="round"/>
+    <line x1="60" y1="34" x2="60" y2="44" stroke="#0e1647" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="60" cy="34" r="5" fill="#ffc233"/>
+    <rect x="4" y="66" width="12" height="26" rx="6" fill="#ffc233"/>
+    <rect x="104" y="66" width="12" height="26" rx="6" fill="#ffc233"/>
+    <rect x="12" y="44" width="96" height="74" rx="24" fill="#2740d6"/>
+    <rect x="24" y="56" width="72" height="48" rx="15" fill="#0e1647"/>
+    <circle cx="46" cy="77" r="7.5" fill="#19c9a0"/>
+    <circle cx="74" cy="77" r="7.5" fill="#19c9a0"/>
+    <path d="M50 91 Q60 98 70 91" fill="none" stroke="#19c9a0" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Nom -->
+  <g font-family="'Segoe UI Variable','Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif" text-anchor="middle">
+    <text x="160" y="176" font-size="24" font-weight="800" fill="#ff6b5b">Kids</text>
+    <text x="160" y="222" font-size="44" font-weight="900" letter-spacing="-1" fill="#0e1647">Tech-<tspan fill="#2740d6">nuru</tspan></text>
+    <rect x="128" y="236" width="64" height="24" rx="12" fill="#ffc233"/>
+    <text x="162" y="253.5" font-size="15" font-weight="800" letter-spacing="4" fill="#0e1647">LAB</text>
+  </g>
+</svg>

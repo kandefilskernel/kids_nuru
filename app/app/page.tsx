@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CreateurArt, EveilArt, ExplorateurArt, HeroArt, Icon } from "@/components/art";
 import { getSetting } from "@/lib/db";
@@ -163,14 +164,25 @@ export default async function Home() {
 
       {/* PARCOURS */}
       <section id="parcours" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20">
-        <p className="text-sm font-bold uppercase tracking-widest text-brand">Le parcours</p>
-        <h2 className="mt-2 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Un programme taillé pour chaque âge, un fil rouge : la programmation
-        </h2>
-        <p className="mt-4 max-w-2xl text-ink/75">
-          La programmation relie l&apos;IA et les systèmes embarqués. Chaque enfant avance sur un
-          parcours continu d&apos;une tranche d&apos;âge à l&apos;autre.
-        </p>
+        <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-brand">Le parcours</p>
+            <h2 className="mt-2 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Un programme taillé pour chaque âge, un fil rouge : la programmation
+            </h2>
+            <p className="mt-4 max-w-2xl text-ink/75">
+              La programmation relie l&apos;IA et les systèmes embarqués. Chaque enfant avance sur un
+              parcours continu d&apos;une tranche d&apos;âge à l&apos;autre.
+            </p>
+          </div>
+          <Image
+            src="/brand/kids-nuru-logo-rond-tech.svg"
+            alt="Kids Tech-nuru Lab : électronique, intelligence artificielle et systèmes embarqués"
+            width={320}
+            height={320}
+            className="mx-auto h-44 w-44 shrink-0 drop-shadow-lg sm:h-52 sm:w-52 md:mx-0"
+          />
+        </div>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           {levels.map((l) => (
             <article
