@@ -15,11 +15,13 @@ Test local : sans `DOMAIN`, Caddy sert `https://localhost` avec un certificat lo
 
 ## Sauvegardes
 - Une sauvegarde `pg_dump` au démarrage puis toutes les 24 h, dans `app/backups/nuru-AAAAMMJJ-HHMMSS.dump`.
+- Au même moment, une archive des fichiers téléversés (photos, dossiers, pièces jointes, stockés dans le volume Docker `uploads`) : `app/backups/nuru-files-AAAAMMJJ-HHMMSS.tar.gz`.
 - Conservation : 14 jours (`BACKUP_KEEP_DAYS`, `BACKUP_INTERVAL_HOURS` dans `.env`).
 - **Copiez `backups/` hors du serveur** (autre machine, stockage cloud) : une sauvegarde sur le même disque ne protège pas d'une panne du serveur.
 
 ## Restauration
 ```bash
-sh backup/restore.sh backups/nuru-AAAAMMJJ-HHMMSS.dump
+sh backup/restore.sh backups/nuru-AAAAMMJJ-HHMMSS.dump backups/nuru-files-AAAAMMJJ-HHMMSS.tar.gz
 ```
+Le second fichier (fichiers téléversés) est facultatif ; prenez le même horodatage que le `.dump`.
 Demande de taper `OUI`, arrête l'app, remplace les données, redémarre l'app. Testez-la au moins une fois avant d'en avoir besoin.

@@ -6,5 +6,6 @@ Dockerfile
 docker-compose.yml
 .git
 backups
+uploads
 backup
 Caddyfile

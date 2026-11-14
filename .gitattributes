@@ -1,0 +1,5 @@
+# Scripts et fichiers lus dans les conteneurs Linux : toujours en fins de ligne LF,
+# même sur un poste Windows (sinon « set: illegal option - » dans backup.sh).
+*.sh text eol=lf
+Caddyfile text eol=lf
+Dockerfile text eol=lf
