@@ -2,7 +2,7 @@ import PageIntro from "@/components/PageIntro";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
-import { countExpenses, getCollectedTotals, getExpenses } from "@/lib/db";
+import { countExpenses, getCollectedTotals, getExpenses, isApporteParFamilles, TRANCHES } from "@/lib/db";
 import { addExpenseAction, deleteExpenseAction, importBudgetAction, updateExpenseAction } from "../actions";
 import AdminNav from "../AdminNav";
 
@@ -23,10 +23,14 @@ export default async function BudgetPage({
 
   const [expenses, total, collected] = await Promise.all([getExpenses(), countExpenses(), getCollectedTotals()]);
 
-  // Dépenses prévues par devise (lignes dont le prix est renseigné)
+  // Dépenses prévues par devise (lignes dont le prix est renseigné). Le matériel apporté par les familles
+  // des 8-12 ans n'est pas une dépense du Lab : il est compté à part.
   const planned: Record<string, number> = {};
+  const familles: Record<string, number> = {};
   for (const e of expenses) {
-    if (e.unitPrice !== null) planned[e.currency] = (planned[e.currency] ?? 0) + e.quantity * e.unitPrice;
+    if (e.unitPrice === null) continue;
+    const target = isApporteParFamilles(e.tranche) ? familles : planned;
+    target[e.currency] = (target[e.currency] ?? 0) + e.quantity * e.unitPrice;
   }
   // Encaissé : paiements non annulés (calculé en base)
   const currencies = [...new Set([...Object.keys(planned), ...Object.keys(collected)])];
@@ -66,6 +70,11 @@ export default async function BudgetPage({
               {currencies.length ? Object.entries(planned).map(([c, v]) => `${fmt(v)} ${c}`).join(" + ") : "—"}
             </p>
             <p className="mt-1 text-xs text-ink/55">{unpriced} ligne(s) sans prix</p>
+            {Object.keys(familles).length > 0 && (
+              <p className="mt-1 text-xs text-ink/55">
+                Hors matériel apporté par les familles (8-12 ans) : {Object.entries(familles).map(([c, v]) => `${fmt(v)} ${c}`).join(" + ")}
+              </p>
+            )}
           </div>
           <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink/10">
             <p className="text-sm font-semibold">Encaissé (frais)</p>
@@ -83,6 +92,11 @@ export default async function BudgetPage({
           </div>
         </div>
 
+        <p className="mt-4 text-xs text-ink/60">
+          Tranche : « Tous » et « Éveil » sont à la charge du Lab. « Explorateur » et « Créateur » (8-12 ans) sont apportés par les familles :
+          ces lignes sont exclues du budget du Lab et du coût du matériel dans le modèle économique.
+        </p>
+
         {total === 0 ? (
           <form action={importBudgetAction} className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink/10">
             <div className="flex-1">
@@ -94,8 +108,9 @@ export default async function BudgetPage({
           </form>
         ) : (
           <div className="mt-6 space-y-3">
-            <div className="hidden grid-cols-[2fr_0.7fr_1fr_0.8fr_1.2fr_1fr_auto] gap-2 px-4 text-xs font-bold uppercase tracking-wide text-ink/55 md:grid">
+            <div className="hidden grid-cols-[2fr_1fr_0.7fr_1fr_0.8fr_1.2fr_1fr_auto] gap-2 px-4 text-xs font-bold uppercase tracking-wide text-ink/55 md:grid">
               <span>Poste</span>
+              <span>Tranche</span>
               <span>Qté</span>
               <span>Prix unitaire</span>
               <span>Devise</span>
@@ -105,9 +120,14 @@ export default async function BudgetPage({
             </div>
             {expenses.map((e) => (
               <div key={e.id} className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink/10 md:flex-row md:items-center">
-                <form id={`exp-${e.id}`} action={updateExpenseAction} className="grid flex-1 gap-2 md:grid-cols-[2fr_0.7fr_1fr_0.8fr_1.2fr_1fr]">
+                <form id={`exp-${e.id}`} action={updateExpenseAction} className="grid flex-1 gap-2 md:grid-cols-[2fr_1fr_0.7fr_1fr_0.8fr_1.2fr_1fr]">
                   <input type="hidden" name="id" value={e.id} />
                   <p className="self-center font-semibold">{e.label}</p>
+                  <select name="tranche" defaultValue={e.tranche} aria-label="Tranche" className={inputCls}>
+                    {TRANCHES.map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
+                  </select>
                   <input name="quantity" type="number" min="0" step="any" defaultValue={e.quantity} aria-label="Quantité" className={inputCls} />
                   <input name="unitPrice" type="number" min="0" step="any" defaultValue={e.unitPrice ?? ""} placeholder="Prix" aria-label="Prix unitaire" className={inputCls} />
                   <select name="currency" defaultValue={e.currency} aria-label="Devise" className={inputCls}>
@@ -135,8 +155,13 @@ export default async function BudgetPage({
           </div>
         )}
 
-        <form action={addExpenseAction} className="mt-6 grid gap-2 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink/10 md:grid-cols-[2fr_0.7fr_1fr_0.8fr_1.2fr_1fr_auto]">
+        <form action={addExpenseAction} className="mt-6 grid gap-2 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-ink/10 md:grid-cols-[2fr_1fr_0.7fr_1fr_0.8fr_1.2fr_1fr_auto]">
           <input name="label" required placeholder="Nouvelle dépense" aria-label="Poste" className={inputCls} />
+          <select name="tranche" aria-label="Tranche" className={inputCls}>
+            {TRANCHES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
           <input name="quantity" type="number" min="0" step="any" defaultValue={1} aria-label="Quantité" className={inputCls} />
           <input name="unitPrice" type="number" min="0" step="any" placeholder="Prix" aria-label="Prix unitaire" className={inputCls} />
           <select name="currency" aria-label="Devise" className={inputCls}>

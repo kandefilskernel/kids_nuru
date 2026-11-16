@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CreateurArt, EveilArt, ExplorateurArt } from "@/components/art";
-import { EVALUATION, PLAN_B, TRACKS, type Track } from "@/lib/programme";
+import { EVALUATION, MATERIEL_SOLIDAIRE, PLAN_B, TRACKS, type Track } from "@/lib/programme";
 import { parseSchedule, timetable, totalMinutes } from "@/lib/schedule";
 import { getSetting } from "@/lib/db";
 import { formatLongDate, nextSession, parsePilotDates, todayLubumbashi, ucfirst } from "@/lib/calendar";
@@ -212,6 +212,26 @@ export default async function ProgrammePage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+
+              {/* Matériel : fourni par le Lab (5-7 ans) ou à apporter (8-12 ans) */}
+              <div className={`mt-6 rounded-3xl p-6 ring-1 ring-ink/10 sm:p-7 ${th.soft}`}>
+                <p className={`text-xs font-bold uppercase tracking-widest ${th.text}`}>
+                  {t.materiel.fourniPar === "lab" ? "Matériel fourni" : "Matériel à apporter"}
+                </p>
+                <h3 className="mt-1 text-xl font-extrabold">
+                  {t.materiel.fourniPar === "lab" ? "Kids Tech-nuru Lab s'occupe de tout" : "Avant la première séance"}
+                </h3>
+                <p className="mt-2 text-sm text-ink/75">{t.materiel.resume}</p>
+                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {t.materiel.liste.map((m) => (
+                    <li key={m} className="flex gap-3 rounded-2xl bg-white p-3 text-sm text-ink/80">
+                      <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${th.dot}`} aria-hidden="true" />
+                      <span>{m}</span>
+                    </li>
+                  ))}
+                </ul>
+                {t.materiel.fourniPar === "famille" && <p className="mt-4 text-xs font-semibold text-ink/60">{MATERIEL_SOLIDAIRE}</p>}
               </div>
 
               {/* Frise : une carte par samedi */}

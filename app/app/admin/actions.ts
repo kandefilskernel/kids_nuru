@@ -26,6 +26,7 @@ import {
   saveAttendance,
   setCapacity,
   addExpense,
+  TRANCHES,
   updateExpense,
   removeExpense,
   countExpenses,
@@ -180,6 +181,11 @@ function text(f: FormData, k: string, max = 200) {
   return String(f.get(k) ?? "").trim().slice(0, max);
 }
 
+function tranche(f: FormData) {
+  const t = text(f, "tranche", 20);
+  return (TRANCHES as readonly string[]).includes(t) ? t : "Tous";
+}
+
 export async function addExpenseAction(f: FormData) {
   if (!(await isAdmin())) redirect("/admin");
   const label = text(f, "label");
@@ -192,8 +198,10 @@ export async function addExpenseAction(f: FormData) {
     currency: f.get("currency") === "CDF" ? "CDF" : "USD",
     supplier: text(f, "supplier"),
     status: text(f, "status", 60) || "À demander",
+    tranche: tranche(f),
   });
   revalidatePath("/admin/budget");
+  revalidatePath("/admin/modele");
   redirect("/admin/budget");
 }
 
@@ -207,7 +215,9 @@ export async function updateExpenseAction(f: FormData) {
     currency: f.get("currency") === "CDF" ? "CDF" : "USD",
     supplier: text(f, "supplier"),
     status: text(f, "status", 60),
+    tranche: tranche(f),
   });
+  revalidatePath("/admin/modele");
   revalidatePath("/admin/budget");
   redirect("/admin/budget");
 }
@@ -238,6 +248,7 @@ export async function importBudgetAction(f: FormData) {
       currency: "USD",
       supplier: supplier.slice(0, 200),
       status: statut.slice(0, 60) || "À demander",
+      tranche: "Tous",
     });
     imported++;
   }

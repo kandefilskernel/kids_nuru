@@ -96,6 +96,7 @@ export function monthly(m: ModelData, children: number, solidaires: number, mate
   const costSalle = children > 0 ? a.salleMois : 0;
   const costAssurance = children > 0 ? a.assuranceMois : 0;
   const costAdmin = children > 0 ? a.adminMois : 0;
+  // materielTotal ne contient que le matériel à la charge du Lab (hors matériel apporté par les familles 8-12 ans).
   const costMateriel = a.amortissementMois > 0 ? materielTotal / a.amortissementMois : 0;
   const revenueOther = sum(m.revenues);
   const costOther = sum(m.costs);

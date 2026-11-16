@@ -171,6 +171,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   supplier TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'À demander'
 );
+-- Tranche concernée : « Tous » ou « Éveil » = à la charge du Lab ; « Explorateur » / « Créateur » = apporté par les familles.
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS tranche TEXT NOT NULL DEFAULT 'Tous';
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -594,11 +596,17 @@ export type Expense = {
   currency: string;
   supplier: string;
   status: string;
+  tranche: string;
 };
+
+export const TRANCHES = ["Tous", "Éveil", "Explorateur", "Créateur"] as const;
+
+/** Les familles des 8-12 ans (Explorateur, Créateur) apportent leur matériel ; le reste est à la charge du Lab. */
+export const isApporteParFamilles = (tranche: string) => tranche === "Explorateur" || tranche === "Créateur";
 
 type ExpenseRow = {
   id: string; label: string; quantity: string; unit_price: string | null;
-  currency: string; supplier: string; status: string;
+  currency: string; supplier: string; status: string; tranche: string;
 };
 
 function toExpense(x: ExpenseRow): Expense {
@@ -610,12 +618,13 @@ function toExpense(x: ExpenseRow): Expense {
     currency: x.currency,
     supplier: x.supplier,
     status: x.status,
+    tranche: x.tranche,
   };
 }
 
 export async function getExpenses(): Promise<Expense[]> {
   const p = await db();
-  const r = await p.query<ExpenseRow>("SELECT id::text, label, quantity, unit_price, currency, supplier, status FROM expenses ORDER BY id");
+  const r = await p.query<ExpenseRow>("SELECT id::text, label, quantity, unit_price, currency, supplier, status, tranche FROM expenses ORDER BY id");
   return r.rows.map(toExpense);
 }
 
@@ -628,16 +637,16 @@ export async function countExpenses() {
 export async function addExpense(x: Omit<Expense, "id">) {
   const p = await db();
   await p.query(
-    "INSERT INTO expenses (label, quantity, unit_price, currency, supplier, status) VALUES ($1,$2,$3,$4,$5,$6)",
-    [x.label, x.quantity, x.unitPrice, x.currency, x.supplier, x.status],
+    "INSERT INTO expenses (label, quantity, unit_price, currency, supplier, status, tranche) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+    [x.label, x.quantity, x.unitPrice, x.currency, x.supplier, x.status, x.tranche],
   );
 }
 
 export async function updateExpense(id: string, x: Omit<Expense, "id" | "label">) {
   const p = await db();
   await p.query(
-    "UPDATE expenses SET quantity = $2, unit_price = $3, currency = $4, supplier = $5, status = $6 WHERE id = $1",
-    [id, x.quantity, x.unitPrice, x.currency, x.supplier, x.status],
+    "UPDATE expenses SET quantity = $2, unit_price = $3, currency = $4, supplier = $5, status = $6, tranche = $7 WHERE id = $1",
+    [id, x.quantity, x.unitPrice, x.currency, x.supplier, x.status, x.tranche],
   );
 }
 
@@ -932,11 +941,14 @@ export async function setSetting(key: string, value: string) {
   );
 }
 
-/** Total du matériel prévu (prix unitaire × quantité), en ignorant les lignes sans prix. */
+/**
+ * Total du matériel prévu à la charge du Lab (prix unitaire × quantité), en ignorant les lignes
+ * sans prix et celles apportées par les familles des 8-12 ans (tranches Explorateur et Créateur).
+ */
 export async function getMaterielTotal(): Promise<number> {
   const p = await db();
   const r = await p.query<{ total: string | null }>(
-    "SELECT sum(quantity * unit_price) total FROM expenses WHERE unit_price IS NOT NULL",
+    "SELECT sum(quantity * unit_price) total FROM expenses WHERE unit_price IS NOT NULL AND tranche NOT IN ('Explorateur', 'Créateur')",
   );
   return Number(r.rows[0]?.total ?? 0);
 }

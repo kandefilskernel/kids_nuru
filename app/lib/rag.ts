@@ -83,7 +83,7 @@ export function modelChunks(m: {
     `Samedis par mois : ${a.samedisParMois}, durée d'une séance : ${a.heuresSeance} h.`,
     `Taux horaire d'un animateur : ${a.tauxAnimateur} USD ; un animateur pour ${a.enfantsParAnimateur} enfants au plus.`,
     `Location de salle : ${a.salleMois} USD par mois ; assurance : ${a.assuranceMois} USD par mois ; communication et frais divers : ${a.adminMois} USD par mois.`,
-    `Soutien des partenaires : ${a.sponsorsMois} USD par mois ; amortissement du matériel sur ${a.amortissementMois} mois.`,
+    `Soutien des partenaires : ${a.sponsorsMois} USD par mois ; amortissement du matériel sur ${a.amortissementMois} mois ; le matériel des 8-12 ans est apporté par les familles (non compté), celui des 5-7 ans est fourni par le Lab.`,
   ].join("\n");
   const res = [
     `Enfants retenus pour le calcul : ${m.children} dont ${m.solidaires} en place solidaire (${m.isPlanned ? "effectif prévu par l'équipe" : "inscrits réels"}). Inscrits actuellement : ${m.actualChildren}.`,

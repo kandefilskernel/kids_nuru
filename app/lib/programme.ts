@@ -16,6 +16,8 @@ export type Track = {
   sessions: Session[];
   variant?: string;
   electronique: { titre: string; points: string[] };
+  /** Qui fournit le matériel : le Lab (5-7 ans) ou la famille (8-12 ans), à apporter avant la 1re séance. */
+  materiel: { fourniPar: "lab" | "famille"; resume: string; liste: string[] };
 };
 
 export const TRACKS: Track[] = [
@@ -30,6 +32,11 @@ export const TRACKS: Track[] = [
         "Découverte des capteurs de lumière et de son avec le kit micro:bit, en démonstration.",
         "Règles de sécurité : pas de court-circuit, on vérifie le circuit avant d'allumer.",
       ],
+    },
+    materiel: {
+      fourniPar: "lab",
+      resume: "Tout le matériel est fourni par Kids Tech-nuru Lab. Votre enfant n'apporte rien.",
+      liste: ["Cartes, robots au sol et kit de circuit fournis", "Rangement et inventaire à la fin de chaque séance"],
     },
     sessions: [
       { n: 1, theme: "Donner un ordre", activity: "Jeu « le robot humain » : un enfant guide un camarade avec des flèches", tools: "Cartes flèches, ruban adhésif au sol", offline: "oui" },
@@ -50,6 +57,16 @@ export const TRACKS: Track[] = [
         "Brancher une LED et un bouton sur la micro:bit, puis programmer la réaction.",
         "Lire un capteur (lumière, température) et afficher sa valeur à l'écran.",
         "Monter un petit circuit sur plaque d'essai (breadboard) et comprendre le rôle de la résistance.",
+      ],
+    },
+    materiel: {
+      fourniPar: "famille",
+      resume: "À apporter par la famille avant la première séance, une seule fois pour tout le parcours.",
+      liste: [
+        "Une carte micro:bit avec son câble USB",
+        "Une plaque d'essai (breadboard), des fils de connexion, quelques LED et résistances",
+        "Un cahier et un crayon",
+        "Un ordinateur ou une tablette pour Scratch, si la famille en a un (sinon le Lab en prête)",
       ],
     },
     sessions: [
@@ -73,6 +90,16 @@ export const TRACKS: Track[] = [
         "Lire un schéma électronique simple avant de monter le circuit.",
       ],
     },
+    materiel: {
+      fourniPar: "famille",
+      resume: "À apporter par la famille avant la première séance, une seule fois pour tout le parcours.",
+      liste: [
+        "Une carte Arduino Uno avec son câble USB",
+        "Une plaque d'essai, des fils de connexion, des LED et des résistances",
+        "Un capteur de distance et un petit moteur avec son support",
+        "Un ordinateur portable pour Python et Teachable Machine, si la famille en a un (sinon le Lab en prête)",
+      ],
+    },
     sessions: [
       { n: 1, theme: "Python, premiers pas", activity: "Afficher, demander un nom, calculer", tools: "Python (hors ligne possible)" },
       { n: 2, theme: "Décisions et boucles", activity: "Mini-quiz et jeu de devinette", tools: "Python" },
@@ -84,6 +111,9 @@ export const TRACKS: Track[] = [
     variant: "Variante 4 samedis : fusionner les samedis 1-2 et 3-4 de chaque tranche.",
   },
 ];
+
+export const MATERIEL_SOLIDAIRE =
+  "Une famille qui ne peut pas acheter le matériel ne perd pas la place de son enfant : le Lab prête un kit pour toute la durée du pilote (voir les places solidaires).";
 
 export const PLAN_B = [
   "Avoir toujours une activité sans écran prête par tranche d'âge (cartes, jeux de rôle, dessins de circuits).",
