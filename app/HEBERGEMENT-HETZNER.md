@@ -92,13 +92,26 @@ docker --version
 
 ## Étape 6 : Récupérer le code
 
-Si le dépôt GitHub est **public** :
+Le dépôt GitHub est **privé** : le serveur s'authentifie avec une **clé de déploiement** en lecture seule (elle ne donne accès qu'à ce dépôt).
 
-```bash
-git clone <URL_DU_DEPOT> /opt/nuru
-```
+1. Sur le serveur, créez la clé :
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/nuru_deploy -N ""
+   cat ~/.ssh/nuru_deploy.pub
+   ```
+2. Sur GitHub : dépôt `kids_nuru` → **Settings** → **Deploy keys** → **Add deploy key**. Titre `hetzner-nuru`, collez la clé, **ne cochez pas** « Allow write access ».
+3. Sur le serveur, indiquez à SSH d'utiliser cette clé, puis clonez :
+   ```bash
+   cat >> ~/.ssh/config <<'EOF'
+   Host github.com
+     IdentityFile ~/.ssh/nuru_deploy
+     IdentitiesOnly yes
+   EOF
+   git clone git@github.com:kandefilskernel/kids_nuru.git /opt/nuru
+   ```
+   Répondez `yes` à la question sur l'empreinte de GitHub.
 
-S'il est **privé**, copiez-le depuis votre PC (PowerShell, dans le dossier du projet) :
+**Alternative sans GitHub** : copiez le code depuis votre PC (PowerShell, dans le dossier du projet) :
 
 ```powershell
 ssh root@IP_DU_SERVEUR "mkdir -p /opt/nuru"
