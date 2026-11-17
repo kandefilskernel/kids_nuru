@@ -16,6 +16,15 @@ while true; do
     mv "$TMP" "$OUT"
     echo "[backup] OK $OUT ($(wc -c < "$OUT") octets)"
     find "$DIR" -name 'nuru-*.dump' -mtime +"$KEEP_DAYS" -print -delete
+    # Fichiers téléversés (dossiers, pièces, galerie) : archive à côté du dump.
+    UP_TMP="$DIR/.uploads-$STAMP.tar.gz.part"
+    if tar -czf "$UP_TMP" -C /data uploads; then
+      mv "$UP_TMP" "$DIR/uploads-$STAMP.tar.gz"
+      find "$DIR" -name 'uploads-*.tar.gz' -mtime +"$KEEP_DAYS" -print -delete
+    else
+      rm -f "$UP_TMP"
+      echo "[backup] ECHEC de l'archive des fichiers" >&2
+    fi
   else
     rm -f "$TMP"
     echo "[backup] ECHEC de pg_dump" >&2

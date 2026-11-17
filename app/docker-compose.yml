@@ -25,6 +25,10 @@ services:
     environment:
       DATABASE_URL: postgres://nuru:${POSTGRES_PASSWORD}@db:5432/nuru
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?définir ADMIN_PASSWORD dans .env}
+    volumes:
+      - uploads:/data/uploads
+      # Documents de référence de l'assistant (lus depuis /complements, voir lib/rag.ts)
+      - ../complements:/complements:ro
 
   caddy:
     image: caddy:2-alpine
@@ -54,9 +58,11 @@ services:
     volumes:
       - ./backup/backup.sh:/backup.sh:ro
       - ./backups:/backups
+      - uploads:/data/uploads:ro
     entrypoint: ["sh", "/backup.sh"]
 
 volumes:
   pgdata:
+  uploads:
   caddy_data:
   caddy_config:
