@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { LINE_SLOTS } from "@/lib/business";
+import { getSetting as getProjSetting } from "@/lib/db";
+import { GROUPS, PROJ_SLOTS, SCENARIOS, defaultScenario, parseProjection, type Line, type ParamKey, type ScenarioName } from "@/lib/projection";
 import { MAX_BLOCKS, parseSlots } from "@/lib/schedule";
 import { normalizeUsername } from "@/lib/passwords";
 import { verifyPassword } from "@/lib/passwords";
@@ -395,4 +397,52 @@ export async function deleteGalleryAction(f: FormData) {
   await removeGalleryItem(text(f, "id", 20));
   revalidatePath("/admin/galerie");
   redirect("/admin/galerie");
+}
+
+/** Enregistre les hypothèses d'un scénario de la simulation sur 36 mois (valeurs et lignes libres). */
+export async function saveProjectionAction(f: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const name = text(f, "scenario", 20) as ScenarioName;
+  if (!(SCENARIOS as readonly string[]).includes(name)) redirect("/admin/projection");
+
+  const all = parseProjection(await getProjSetting("projection_3ans"));
+  const sc = all[name];
+  for (const g of GROUPS) {
+    for (const it of g.items) {
+      const n = Number(f.get(it.key));
+      if (!Number.isFinite(n) || n < 0) continue;
+      sc.params[it.key as ParamKey] = it.pct ? Math.min(100, n) / 100 : n;
+    }
+  }
+  sc.params.capGroup = Math.max(1, sc.params.capGroup);
+  sc.params.groupsSite = Math.max(1, Math.round(sc.params.groupsSite));
+
+  // Une ligne est supprimée si « Supprimer » est coché, ou si son libellé ou son montant est vide.
+  const lines = (prefix: "rev" | "cost"): Line[] =>
+    Array.from({ length: PROJ_SLOTS }, (_, i) => ({
+      label: text(f, `${prefix}Label${i}`, 120),
+      amount: Number(f.get(`${prefix}Amount${i}`)) || 0,
+      start: Math.max(1, Math.round(Number(f.get(`${prefix}Start${i}`)) || 1)),
+      deleted: f.get(`${prefix}Del${i}`) === "on",
+    }))
+      .filter((l) => !l.deleted && l.label && l.amount > 0)
+      .map(({ label, amount, start }) => ({ label, amount, start }));
+  sc.revenues = lines("rev");
+  sc.costs = lines("cost");
+
+  await setSetting("projection_3ans", JSON.stringify(all));
+  revalidatePath("/admin/projection");
+  redirect(`/admin/projection?s=${encodeURIComponent(name)}&saved=1`);
+}
+
+/** Remet un scénario aux valeurs d'origine. */
+export async function resetProjectionAction(f: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const name = text(f, "scenario", 20) as ScenarioName;
+  if (!(SCENARIOS as readonly string[]).includes(name)) redirect("/admin/projection");
+  const all = parseProjection(await getProjSetting("projection_3ans"));
+  all[name] = defaultScenario(name);
+  await setSetting("projection_3ans", JSON.stringify(all));
+  revalidatePath("/admin/projection");
+  redirect(`/admin/projection?s=${encodeURIComponent(name)}&reset=1`);
 }

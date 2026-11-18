@@ -13,6 +13,7 @@ const ITEMS = [
   { href: "/admin/enseignants", label: "Enseignants" },
   { href: "/admin/dossiers", label: "Dossiers" },
   { href: "/admin/modele", label: "Modèle" },
+  { href: "/admin/projection", label: "Projection 3 ans" },
   { href: "/admin/financement", label: "Financement" },
   { href: "/admin/risque", label: "Risque" },
   { href: "/admin/equipe", label: "Équipe" },
